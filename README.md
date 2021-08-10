@@ -26,6 +26,16 @@ etcdadpt.Init(etcdadpt.Config{
 This mode will start an embedded etcd server.
 
 **With remote etcd mode:**
+
+startup etcd server.
+
+```shell
+docker run -d  -p 2379:2379 --name etcd quay.io/coreos/etcd:v3.2.13 etcd \
+  --listen-client-urls http://0.0.0.0:2379 --advertise-client-urls http://0.0.0.0:2379
+```
+
+write the following code.
+
 ```go
 etcdadpt.Init(etcdadpt.Config{
 	Kind:             "etcd", 
@@ -36,7 +46,10 @@ etcdadpt.Init(etcdadpt.Config{
 Step 3. call the API and enjoy it!
 
 ```go
-kv, err := etcdadpt.Get(context.Background(), "/key")
+// put a key
+_ := etcdadpt.Put(context.Background(), "/key", "abc")
+// get a key
+kv, _ := etcdadpt.Get(context.Background(), "/key")
 log.Println(fmt.Sprintf("%v", kv))
 ```
 and you will see log print below:
