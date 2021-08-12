@@ -19,10 +19,10 @@ package etcdadpt
 
 import (
 	"errors"
+	"fmt"
 	"time"
 
 	"github.com/go-chassis/foundation/backoff"
-	"github.com/go-chassis/openlog"
 )
 
 var (
@@ -47,7 +47,7 @@ func Init(cfg Config) error {
 	for i := 0; ; i++ {
 		inst, err := NewInstance(cfg)
 		if err != nil {
-			cfg.Logger.Error("init etcd failed", openlog.WithErr(err))
+			cfg.Logger.Error(fmt.Sprintf("init etcd failed, error: %s", err))
 			if err == ErrNoPlugin {
 				return err
 			}

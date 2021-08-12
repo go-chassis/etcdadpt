@@ -23,7 +23,6 @@ import (
 	"time"
 
 	"github.com/coreos/etcd/clientv3"
-	"github.com/go-chassis/openlog"
 	"github.com/little-cui/etcdadpt"
 	"github.com/little-cui/etcdadpt/middleware/metrics"
 )
@@ -42,8 +41,8 @@ func (c *Client) Compact(ctx context.Context, reserve int64) error {
 	_, err := c.Client.Compact(ctx, revToCompact, clientv3.WithCompactPhysical())
 	metrics.ReportBackendOperationCompleted(OperationCompact, err, t)
 	if err != nil {
-		c.logger().Error(fmt.Sprintf("compact %s failed, revision is %d(current: %d, reserve %d)",
-			eps, revToCompact, curRev, reserve), openlog.WithErr(err))
+		c.logger().Error(fmt.Sprintf("compact %s failed, revision is %d(current: %d, reserve %d), error: %s",
+			eps, revToCompact, curRev, reserve, err))
 		return err
 	}
 	c.logInfoOrWarn(t, fmt.Sprintf("compacted %s, revision is %d(current: %d, reserve %d)",
@@ -57,7 +56,7 @@ func (c *Client) getLeaderCurrentRevision(ctx context.Context) int64 {
 	for _, ep := range eps {
 		resp, err := c.GetEndpointStatus(ctx, ep)
 		if err != nil {
-			c.logger().Error(fmt.Sprintf("compact error ,can not get status from %s", ep), openlog.WithErr(err))
+			c.logger().Error(fmt.Sprintf("compact error ,can not get status from %s, error: %s", ep, err))
 			continue
 		}
 		curRev = resp.Header.Revision

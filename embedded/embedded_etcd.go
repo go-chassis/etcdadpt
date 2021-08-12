@@ -245,8 +245,8 @@ func (s *EtcdEmbed) Compact(ctx context.Context, reserve int64) error {
 		Physical: true,
 	})
 	if err != nil {
-		s.logger().Error(fmt.Sprintf("compact locally failed, revision is %d(current: %d, reserve %d)",
-			revToCompact, curRev, reserve), openlog.WithErr(err))
+		s.logger().Error(fmt.Sprintf("compact locally failed, revision is %d(current: %d, reserve %d), error: %s",
+			revToCompact, curRev, reserve, err))
 		return err
 	}
 	s.logger().Info(fmt.Sprintf("compacted locally, revision is %d(current: %d, reserve %d)", revToCompact, curRev, reserve))
@@ -420,7 +420,7 @@ func (s *EtcdEmbed) Watch(ctx context.Context, opts ...etcdadpt.OpOption) (err e
 		watchID := ws.Watch(op.Key, keyBytes, op.Revision)
 		defer func() {
 			if err := ws.Cancel(watchID); err != nil {
-				s.logger().Error("", openlog.WithErr(err))
+				s.logger().Error(err.Error())
 			}
 		}()
 		responses := ws.Chan()
@@ -465,7 +465,7 @@ func (s *EtcdEmbed) readyNotify() {
 		})
 	case <-time.After(timeout):
 		err := fmt.Errorf("timed out(%s)", timeout)
-		s.logger().Error("read notify failed", openlog.WithErr(err))
+		s.logger().Error(fmt.Sprintf("read notify failed, error: %s", err))
 
 		s.Embed.Server.Stop()
 
@@ -581,7 +581,7 @@ func NewEmbeddedEtcd(cfg etcdadpt.Config) etcdadpt.Client {
 	// 1. 管理端口
 	urls, err := parseURL(mgrAddrs)
 	if err != nil {
-		logger.Error(`"manager_addr" field configure error`, openlog.WithErr(err))
+		logger.Error(fmt.Sprintf(`"manager_addr" field configure error: %s`, err))
 		inst.err <- err
 		return inst
 	}
@@ -604,7 +604,7 @@ func NewEmbeddedEtcd(cfg etcdadpt.Config) etcdadpt.Client {
 
 	etcd, err := embed.StartEtcd(serverCfg)
 	if err != nil {
-		logger.Error("error to start etcd server", openlog.WithErr(err))
+		logger.Error(fmt.Sprintf("error to start etcd server, error: %s", err))
 		inst.err <- err
 		return inst
 	}

@@ -27,7 +27,6 @@ import (
 
 	"github.com/coreos/etcd/clientv3"
 	"github.com/go-chassis/foundation/gopool"
-	"github.com/go-chassis/openlog"
 	"github.com/little-cui/etcdadpt"
 	"github.com/little-cui/etcdadpt/middleware/metrics"
 )
@@ -77,7 +76,7 @@ func (c *Client) Initialize() (err error) {
 
 	c.Client, err = c.newClient()
 	if err != nil {
-		c.logger().Error(fmt.Sprintf("get etcd client %v failed.", c.Endpoints), openlog.WithErr(err))
+		c.logger().Error(fmt.Sprintf("get etcd client %v failed. error: %s", c.Endpoints, err))
 		c.onError(err)
 		return
 	}
@@ -156,13 +155,13 @@ epLoop:
 func (c *Client) ReOpen() error {
 	client, cerr := c.newClient()
 	if cerr != nil {
-		c.logger().Error(fmt.Sprintf("create a new connection to etcd %v failed",
-			c.Endpoints), openlog.WithErr(cerr))
+		c.logger().Error(fmt.Sprintf("create a new connection to etcd %v failed, error: %s",
+			c.Endpoints, cerr))
 		return cerr
 	}
 	c.Client, client = client, c.Client
 	if cerr = client.Close(); cerr != nil {
-		c.logger().Error("failed to close the unavailable etcd client", openlog.WithErr(cerr))
+		c.logger().Error(fmt.Sprintf("failed to close the unavailable etcd client, error: %s", cerr))
 	}
 	client = nil
 	return nil
