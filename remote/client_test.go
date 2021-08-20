@@ -89,7 +89,7 @@ func TestInitCluster(t *testing.T) {
 	})
 }
 
-func TestEtcdClient(t *testing.T) {
+func TestNewClient(t *testing.T) {
 	t.Run("new client, should return ok", func(t *testing.T) {
 		var cfg etcdadpt.Config
 		cfg.ClusterAddresses = endpoint
@@ -121,16 +121,22 @@ func TestEtcdClient(t *testing.T) {
 			assert.Fail(t, "should return err")
 		}
 	})
+}
 
-	t.Run("client do, should return ok", func(t *testing.T) {
-		var cfg etcdadpt.Config
-		cfg.ClusterAddresses = endpoint
-		cfg.DialTimeout = dialTimeout
-		cfg.RequestTimeOut = requestTimeout
-		inst := remote.NewClient(cfg)
-		defer inst.Close()
-		// put
-		resp, err := inst.Do(context.Background(), etcdadpt.PUT, etcdadpt.WithStrKey("/test_range/b"),
+func TestEtcdClient_Do(t *testing.T) {
+	var (
+		resp *etcdadpt.Response
+		err  error
+		cfg  etcdadpt.Config
+	)
+	cfg.ClusterAddresses = endpoint
+	cfg.DialTimeout = dialTimeout
+	cfg.RequestTimeOut = requestTimeout
+	inst := remote.NewClient(cfg)
+	defer inst.Close()
+
+	t.Run("prepare data should be ok", func(t *testing.T) {
+		resp, err = inst.Do(context.Background(), etcdadpt.PUT, etcdadpt.WithStrKey("/test_range/b"),
 			etcdadpt.WithStrValue("b"))
 		assert.NoError(t, err)
 		assert.True(t, resp.Succeeded)
@@ -176,8 +182,10 @@ func TestEtcdClient(t *testing.T) {
 			etcdadpt.WithStrValue("dd"))
 		assert.NoError(t, err)
 		assert.True(t, resp.Succeeded)
+	})
 
-		// get prefix
+	// get prefix
+	t.Run("get prefix key should return ok", func(t *testing.T) {
 		resp, err = inst.Do(context.Background(), etcdadpt.GET, etcdadpt.WithStrKey("/test_range/d"),
 			etcdadpt.WithPrefix())
 		assert.NoError(t, err)
@@ -204,8 +212,10 @@ func TestEtcdClient(t *testing.T) {
 		assert.True(t, resp.Succeeded)
 		assert.Equal(t, int64(2), resp.Count)
 		assert.Nil(t, resp.Kvs)
+	})
 
-		// get range
+	// get range
+	t.Run("get range [b, dd) should return ok", func(t *testing.T) {
 		resp, err = inst.Do(context.Background(), etcdadpt.GET,
 			etcdadpt.WithStrKey("/test_range/b"),
 			etcdadpt.WithStrEndKey("/test_range/dd")) // [b, dd) !!!
@@ -242,8 +252,10 @@ func TestEtcdClient(t *testing.T) {
 		assert.True(t, resp.Succeeded)
 		assert.Equal(t, int64(3), resp.Count)
 		assert.Nil(t, resp.Kvs)
+	})
 
-		// get prefix paging
+	// get prefix paging b,a,c,d,dd
+	t.Run("page 3 limit 2 should return c,d", func(t *testing.T) {
 		resp, err = inst.Do(context.Background(), etcdadpt.GET,
 			etcdadpt.WithStrKey("/test_range/"), etcdadpt.WithPrefix(),
 			etcdadpt.WithOffset(2), etcdadpt.WithLimit(2))
@@ -285,7 +297,51 @@ func TestEtcdClient(t *testing.T) {
 		assert.True(t, resp.Succeeded)
 		assert.Equal(t, int64(5), resp.Count)
 		assert.Nil(t, resp.Kvs)
+	})
 
+	t.Run("page 3 limit 2 desc should return c,a", func(t *testing.T) {
+		resp, err = inst.Do(context.Background(), etcdadpt.GET,
+			etcdadpt.WithStrKey("/test_range/"), etcdadpt.WithPrefix(),
+			etcdadpt.WithOffset(2), etcdadpt.WithLimit(2), etcdadpt.WithDescendOrder())
+		assert.NoError(t, err)
+		assert.True(t, resp.Succeeded)
+		assert.Equal(t, int64(5), resp.Count)
+		assert.Equal(t, 2, len(resp.Kvs))
+		assert.Equal(t, "/test_range/c", string(resp.Kvs[0].Key))
+		assert.Equal(t, "c", string(resp.Kvs[0].Value))
+		assert.Equal(t, "/test_range/a", string(resp.Kvs[1].Key))
+		assert.Equal(t, "a", string(resp.Kvs[1].Value))
+	})
+
+	t.Run("page 1 limit 2 order by create rev should return b,a", func(t *testing.T) {
+		resp, err = inst.Do(context.Background(), etcdadpt.GET,
+			etcdadpt.WithStrKey("/test_range/"), etcdadpt.WithPrefix(),
+			etcdadpt.WithOffset(0), etcdadpt.WithLimit(2), etcdadpt.WithOrderByCreate())
+		assert.NoError(t, err)
+		assert.True(t, resp.Succeeded)
+		assert.Equal(t, int64(5), resp.Count)
+		assert.Equal(t, 2, len(resp.Kvs))
+		assert.Equal(t, "/test_range/b", string(resp.Kvs[0].Key))
+		assert.Equal(t, "b", string(resp.Kvs[0].Value))
+		assert.Equal(t, "/test_range/a", string(resp.Kvs[1].Key))
+		assert.Equal(t, "a", string(resp.Kvs[1].Value))
+	})
+
+	t.Run("page 1 limit 2 order by create rev desc should return dd,d", func(t *testing.T) {
+		resp, err = inst.Do(context.Background(), etcdadpt.GET,
+			etcdadpt.WithStrKey("/test_range/"), etcdadpt.WithPrefix(),
+			etcdadpt.WithOffset(0), etcdadpt.WithLimit(2), etcdadpt.WithOrderByCreate(), etcdadpt.WithDescendOrder())
+		assert.NoError(t, err)
+		assert.True(t, resp.Succeeded)
+		assert.Equal(t, int64(5), resp.Count)
+		assert.Equal(t, 2, len(resp.Kvs))
+		assert.Equal(t, "/test_range/dd", string(resp.Kvs[0].Key))
+		assert.Equal(t, "dd", string(resp.Kvs[0].Value))
+		assert.Equal(t, "/test_range/d", string(resp.Kvs[1].Key))
+		assert.Equal(t, "d", string(resp.Kvs[1].Value))
+	})
+
+	t.Run("invalid offset should return empty", func(t *testing.T) {
 		resp, err = inst.Do(context.Background(), etcdadpt.GET,
 			etcdadpt.WithStrKey("/test_range/"), etcdadpt.WithPrefix(),
 			etcdadpt.WithOffset(6), etcdadpt.WithLimit(2))
@@ -302,8 +358,10 @@ func TestEtcdClient(t *testing.T) {
 		assert.True(t, resp.Succeeded)
 		assert.Equal(t, int64(5), resp.Count)
 		assert.Equal(t, 5, len(resp.Kvs))
+	})
 
-		// get range paging
+	// get range paging
+	t.Run("get range and paging should return ok", func(t *testing.T) {
 		resp, err = inst.Do(context.Background(), etcdadpt.GET,
 			etcdadpt.WithStrKey("/test_range/b"),
 			etcdadpt.WithStrEndKey("/test_range/dd"),
@@ -366,7 +424,9 @@ func TestEtcdClient(t *testing.T) {
 		assert.True(t, resp.Succeeded)
 		assert.Equal(t, int64(4), resp.Count)
 		assert.Equal(t, 0, len(resp.Kvs))
+	})
 
+	t.Run("delete kvs should return ok", func(t *testing.T) {
 		// delete range
 		resp, err = inst.Do(context.Background(), etcdadpt.DEL,
 			etcdadpt.WithStrKey("/test_range/b"),
@@ -392,7 +452,9 @@ func TestEtcdClient(t *testing.T) {
 		assert.NoError(t, err)
 		assert.True(t, resp.Succeeded)
 		assert.Equal(t, int64(0), resp.Count)
+	})
 
+	t.Run("test large data should return ok", func(t *testing.T) {
 		// large data
 		var wg sync.WaitGroup
 		for i := 0; i < etcdadpt.DefaultPageCount+1; i++ {
