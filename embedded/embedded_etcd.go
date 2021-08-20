@@ -19,6 +19,7 @@ package embedded
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net/url"
@@ -562,6 +563,10 @@ func NewEmbeddedEtcd(cfg etcdadpt.Config) etcdadpt.Client {
 	if len(cfg.ManagerAddress) > 0 {
 		mgrAddrs = cfg.ManagerAddress
 	}
+	clusterAddrs := hostName + "=" + mgrAddrs
+	if len(cfg.ClusterAddresses) > 0 {
+		clusterAddrs = cfg.ClusterAddresses
+	}
 	inst.goroutine = gopool.New(gopool.Configure().WithRecoverFunc(inst.logRecover))
 
 	if cfg.SslEnabled {
@@ -577,7 +582,7 @@ func NewEmbeddedEtcd(cfg etcdadpt.Config) etcdadpt.Client {
 	serverCfg.Dir = "data"
 	// 集群支持
 	serverCfg.Name = hostName
-	serverCfg.InitialCluster = cfg.ClusterAddresses
+	serverCfg.InitialCluster = clusterAddrs
 	// 1. 管理端口
 	urls, err := parseURL(mgrAddrs)
 	if err != nil {
@@ -599,8 +604,8 @@ func NewEmbeddedEtcd(cfg etcdadpt.Config) etcdadpt.Client {
 		serverCfg.AutoCompactionRetention = cfg.CompactInterval.String()
 	}
 
-	logger.Debug(fmt.Sprintf("--initial-cluster %s --initial-advertise-peer-urls %s --listen-peer-urls %s",
-		serverCfg.InitialCluster, mgrAddrs, mgrAddrs))
+	bytes, _ := json.Marshal(serverCfg)
+	logger.Debug(stringutil.Bytes2str(bytes))
 
 	etcd, err := embed.StartEtcd(serverCfg)
 	if err != nil {
