@@ -89,10 +89,12 @@ func (s *EtcdEmbed) toGetRequest(op etcdadpt.OpOptions) *etcdserverpb.RangeReque
 	}
 	sortTarget := etcdserverpb.RangeRequest_KEY
 	switch op.OrderBy {
-	case etcdadpt.OrderByKey:
-		sortTarget = etcdserverpb.RangeRequest_KEY
 	case etcdadpt.OrderByCreate:
 		sortTarget = etcdserverpb.RangeRequest_CREATE
+	case etcdadpt.OrderByMod:
+		sortTarget = etcdserverpb.RangeRequest_MOD
+	case etcdadpt.OrderByVer:
+		sortTarget = etcdserverpb.RangeRequest_VERSION
 	}
 	order := etcdserverpb.RangeRequest_NONE
 	switch op.SortOrder {
@@ -271,10 +273,14 @@ func (s *EtcdEmbed) Do(ctx context.Context, opts ...etcdadpt.OpOption) (*etcdadp
 	var resp *etcdadpt.Response
 	switch op.Action {
 	case etcdadpt.ActionGet:
+		// TODO large request paging
 		var etcdResp *etcdserverpb.RangeResponse
 		etcdResp, err = s.Embed.Server.Range(otCtx, s.toGetRequest(op))
 		if err != nil {
 			break
+		}
+		if op.LargeRequestPaging() && op.Offset >= 0 && op.Limit > 0 {
+			pagingResult(op, etcdResp)
 		}
 		resp = &etcdadpt.Response{
 			Kvs:      etcdResp.Kvs,
@@ -305,6 +311,18 @@ func (s *EtcdEmbed) Do(ctx context.Context, opts ...etcdadpt.OpOption) (*etcdadp
 	}
 	resp.Succeeded = true
 	return resp, nil
+}
+
+func pagingResult(op etcdadpt.OpOptions, etcdResp *etcdserverpb.RangeResponse) {
+	if op.Offset >= etcdResp.Count {
+		etcdResp.Kvs = []*mvccpb.KeyValue{}
+		return
+	}
+	end := op.Offset + op.Limit
+	if end > etcdResp.Count {
+		end = etcdResp.Count
+	}
+	etcdResp.Kvs = etcdResp.Kvs[op.Offset:end]
 }
 
 // TODO EMBED支持KV().TxnBegin()->TxnID，可惜PROXY模式暂时不支持

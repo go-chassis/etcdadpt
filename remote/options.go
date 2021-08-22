@@ -45,10 +45,12 @@ func (c *Client) toGetRequest(op etcdadpt.OpOptions) []clientv3.OpOption {
 	// sort key by default and not need to set this flag
 	sortTarget := clientv3.SortByKey
 	switch op.OrderBy {
-	case etcdadpt.OrderByKey:
-		sortTarget = clientv3.SortByKey
 	case etcdadpt.OrderByCreate:
 		sortTarget = clientv3.SortByCreateRevision
+	case etcdadpt.OrderByMod:
+		sortTarget = clientv3.SortByModRevision
+	case etcdadpt.OrderByVer:
+		sortTarget = clientv3.SortByVersion
 	}
 	switch op.SortOrder {
 	case etcdadpt.SortAscend:

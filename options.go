@@ -23,8 +23,9 @@ import (
 )
 
 type OpOptions struct {
-	Action        Action
-	Key           []byte
+	Action Action
+	Key    []byte
+	// EndKey must be lexicographically greater than Key.
 	EndKey        []byte
 	Value         []byte
 	Prefix        bool
@@ -109,6 +110,10 @@ func (op OpOptions) CacheOnly() bool {
 	return op.Mode == ModeCache
 }
 
+func (op OpOptions) LargeRequestPaging() bool {
+	return (op.Prefix || len(op.EndKey) > 0) && !op.CountOnly
+}
+
 type OpOption func(*OpOptions)
 type Operation func(...OpOption) (op OpOptions)
 type WatchCallback func(message string, evt *Response) error
@@ -126,14 +131,22 @@ func WithLease(leaseID int64) OpOption { return func(op *OpOptions) { op.Lease =
 func WithKeyOnly() OpOption            { return func(op *OpOptions) { op.KeyOnly = true } }
 func WithCountOnly() OpOption          { return func(op *OpOptions) { op.CountOnly = true } }
 func WithGlobal() OpOption             { return func(op *OpOptions) { op.Global = true } }
-func WithOrderByCreate() OpOption      { return func(op *OpOptions) { op.OrderBy = OrderByCreate } }
-func WithNoneOrder() OpOption          { return func(op *OpOptions) { op.SortOrder = SortNone } }
-func WithAscendOrder() OpOption        { return func(op *OpOptions) { op.SortOrder = SortAscend } }
-func WithDescendOrder() OpOption       { return func(op *OpOptions) { op.SortOrder = SortDescend } }
-func WithRev(revision int64) OpOption  { return func(op *OpOptions) { op.Revision = revision } }
-func WithIgnoreLease() OpOption        { return func(op *OpOptions) { op.IgnoreLease = true } }
-func WithCacheOnly() OpOption          { return func(op *OpOptions) { op.Mode = ModeCache } }
-func WithNoCache() OpOption            { return func(op *OpOptions) { op.Mode = ModeNoCache } }
+
+// WithOrderByCreate TODO support it!
+func WithOrderByCreate() OpOption { return func(op *OpOptions) { op.OrderBy = OrderByCreate } }
+
+// WithOrderByMod TODO support it!
+func WithOrderByMod() OpOption { return func(op *OpOptions) { op.OrderBy = OrderByMod } }
+
+// WithOrderByVer TODO support it!
+func WithOrderByVer() OpOption        { return func(op *OpOptions) { op.OrderBy = OrderByVer } }
+func WithNoneOrder() OpOption         { return func(op *OpOptions) { op.SortOrder = SortNone } }
+func WithAscendOrder() OpOption       { return func(op *OpOptions) { op.SortOrder = SortAscend } }
+func WithDescendOrder() OpOption      { return func(op *OpOptions) { op.SortOrder = SortDescend } }
+func WithRev(revision int64) OpOption { return func(op *OpOptions) { op.Revision = revision } }
+func WithIgnoreLease() OpOption       { return func(op *OpOptions) { op.IgnoreLease = true } }
+func WithCacheOnly() OpOption         { return func(op *OpOptions) { op.Mode = ModeCache } }
+func WithNoCache() OpOption           { return func(op *OpOptions) { op.Mode = ModeNoCache } }
 func WithWatchCallback(f WatchCallback) OpOption {
 	return func(op *OpOptions) { op.WatchCallback = f }
 }
@@ -167,7 +180,6 @@ func OptionsToOp(opts ...OpOption) (op OpOptions) {
 	}
 	if op.Limit == 0 {
 		op.Offset = -1
-		op.Limit = DefaultPageCount
 	}
 	return
 }

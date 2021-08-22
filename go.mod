@@ -2,9 +2,7 @@ module github.com/little-cui/etcdadpt
 
 go 1.16
 
-replace (
-	google.golang.org/grpc => google.golang.org/grpc v1.26.0
-)
+replace google.golang.org/grpc => google.golang.org/grpc v1.26.0
 
 require (
 	github.com/coreos/bbolt v1.3.3 // indirect

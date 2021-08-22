@@ -50,8 +50,8 @@ func (c *Client) Do(ctx context.Context, opts ...etcdadpt.OpOption) (*etcdadpt.R
 		var etcdResp *clientv3.GetResponse
 		key := stringutil.Bytes2str(op.Key)
 
-		if (op.Prefix || len(op.EndKey) > 0) && !op.CountOnly {
-			etcdResp, err = c.Paging(ctx, op)
+		if op.LargeRequestPaging() {
+			etcdResp, err = c.LargeRequestPaging(ctx, op)
 			if err != nil {
 				break
 			}
@@ -103,102 +103,144 @@ func (c *Client) Do(ctx context.Context, opts ...etcdadpt.OpOption) (*etcdadpt.R
 	return resp, nil
 }
 
-func (c *Client) Paging(ctx context.Context, op etcdadpt.OpOptions) (*clientv3.GetResponse, error) {
+func (c *Client) LargeRequestPaging(ctx context.Context, op etcdadpt.OpOptions) (*clientv3.GetResponse, error) {
 	var etcdResp *clientv3.GetResponse
 	key := stringutil.Bytes2str(op.Key)
-
 	start := time.Now()
-	tempOp := op
-	tempOp.CountOnly = true
-	countResp, err := c.Client.Get(ctx, key, c.toGetRequest(tempOp)...)
+
+	countResp, err := c.Client.Get(ctx, key, append(c.toGetRequest(op), clientv3.WithCountOnly())...)
 	if err != nil {
 		return nil, err
 	}
 
 	recordCount := countResp.Count
-	if op.Offset == -1 && recordCount <= op.Limit {
+	offset := op.Offset
+	pageSize := op.Limit
+	if pageSize == 0 {
+		pageSize = etcdadpt.DefaultPageCount
+	}
+	if offset < 0 && recordCount <= pageSize {
 		return nil, nil // no need to do paging
 	}
-
-	tempOp.CountOnly = false
-	tempOp.Prefix = false
-	tempOp.SortOrder = etcdadpt.SortAscend
-	tempOp.EndKey = op.EndKey
-	if len(op.EndKey) == 0 {
-		tempOp.EndKey = stringutil.Str2bytes(clientv3.GetPrefixRangeEnd(key))
-	}
-	tempOp.Revision = countResp.Header.Revision
 
 	etcdResp = countResp
 	etcdResp.Kvs = make([]*mvccpb.KeyValue, 0, etcdResp.Count)
 
-	pageCount := recordCount / op.Limit
-	remainCount := recordCount % op.Limit
-	if remainCount > 0 {
-		pageCount++
-	}
-	minPage, maxPage := int64(0), pageCount
-	if op.Offset >= 0 {
-		count := op.Offset + 1
-		maxPage = count / op.Limit
-		if count%op.Limit > 0 {
-			maxPage++
-		}
-		minPage = maxPage - 1
+	if offset >= recordCount {
+		return etcdResp, nil
 	}
 
-	var baseOps []clientv3.OpOption
-	baseOps = append(baseOps, c.toGetRequest(tempOp)...)
-
+	order := op.SortOrder
+	begin, end, minPage, maxPage := getPageRange(recordCount, pageSize, offset, order)
+	baseOps := c.toPagingOps(op, key, countResp.Header.Revision)
 	nextKey := key
-	for i := int64(0); i < pageCount; i++ {
-		if i >= maxPage {
-			break
+	for i := int64(0); i < maxPage; i++ {
+		// get pageSize+1 records for the last key of the result is used as the first key of next page
+		ops := append(baseOps, clientv3.WithLimit(pageSize+1))
+		if i < minPage {
+			// for the performance, just get the list without values
+			ops = append(ops, clientv3.WithKeysOnly())
 		}
-
-		limit, start := op.Limit, 0
-		if remainCount > 0 && i == pageCount-1 {
-			limit = remainCount
-		}
-		if i != 0 {
-			limit++
-			start = 1
-		}
-		ops := append(baseOps, clientv3.WithLimit(limit))
 		recordResp, err := c.Client.Get(ctx, nextKey, ops...)
 		if err != nil {
 			return nil, err
 		}
-
-		l := int64(len(recordResp.Kvs))
-		if l <= 0 { // no more data, data may decrease during paging
+		beginIndex := int64(0)
+		endIndex := int64(len(recordResp.Kvs))
+		if endIndex == 0 { // no more data, data may decrease during paging
 			break
 		}
-		nextKey = stringutil.Bytes2str(recordResp.Kvs[l-1].Key)
+		if endIndex > pageSize { // have a next page
+			endIndex--
+			nextKey = stringutil.Bytes2str(recordResp.Kvs[endIndex].Key)
+		}
 		if i < minPage {
 			// even through current page index less then the min page index,
 			// but here must to get the nextKey and then continue
 			continue
 		}
-		etcdResp.Kvs = append(etcdResp.Kvs, recordResp.Kvs[start:]...)
+		if begin > 0 && i == minPage {
+			beginIndex = begin
+		}
+		if end > 0 && i == maxPage-1 {
+			endIndex = end
+		}
+		etcdResp.Kvs = append(etcdResp.Kvs, recordResp.Kvs[beginIndex:endIndex]...)
 	}
 
-	if op.Offset == -1 {
+	if offset < 0 {
 		c.logInfoOrWarn(start, fmt.Sprintf("get too many KeyValues(%s) from etcd, now paging.(%d vs %d)",
-			key, recordCount, op.Limit))
+			key, recordCount, pageSize))
 	}
 
 	// too slow
-	if op.SortOrder == etcdadpt.SortDescend {
-		t := time.Now()
-		for i, l := 0, len(etcdResp.Kvs); i < l; i++ {
-			last := l - i - 1
-			if last <= i {
-				break
-			}
-			etcdResp.Kvs[i], etcdResp.Kvs[last] = etcdResp.Kvs[last], etcdResp.Kvs[i]
-		}
-		c.logNilOrWarn(t, fmt.Sprintf("sorted descend %d KeyValues(%s)", recordCount, key))
+	if order == etcdadpt.SortDescend {
+		c.reverseResult(etcdResp, recordCount, key)
 	}
 	return etcdResp, nil
+}
+
+func (c *Client) reverseResult(etcdResp *clientv3.GetResponse, recordCount int64, key string) {
+	t := time.Now()
+	for i, l := 0, len(etcdResp.Kvs); i < l; i++ {
+		last := l - i - 1
+		if last <= i {
+			break
+		}
+		etcdResp.Kvs[i], etcdResp.Kvs[last] = etcdResp.Kvs[last], etcdResp.Kvs[i]
+	}
+	c.logNilOrWarn(t, fmt.Sprintf("sorted descend %d KeyValues(%s)", recordCount, key))
+}
+
+func (c *Client) toPagingOps(op etcdadpt.OpOptions, key string, rev int64) []clientv3.OpOption {
+	var baseOps []clientv3.OpOption
+	tempOp := op
+	tempOp.CountOnly = false
+	tempOp.Prefix = false
+	tempOp.SortOrder = etcdadpt.SortAscend
+	if len(tempOp.EndKey) == 0 {
+		tempOp.EndKey = []byte(clientv3.GetPrefixRangeEnd(key))
+	}
+	tempOp.Revision = rev
+	baseOps = append(baseOps, c.toGetRequest(tempOp)...)
+	return baseOps
+}
+
+func getPageRange(recordCount int64, pageSize int64, offset int64, order etcdadpt.SortOrder) (int64, int64, int64, int64) {
+	pageCount := recordCount / pageSize
+	remainCount := recordCount % pageSize
+	if remainCount > 0 {
+		pageCount++
+	}
+	begin, end, minPage, maxPage := int64(0), int64(0), int64(0), pageCount
+	if offset < 0 {
+		return 0, 0, minPage, maxPage
+	}
+
+	if order == etcdadpt.SortDescend {
+		// if reverse order, to convert in ascend ordered offset
+		offset = recordCount - offset - pageSize
+	}
+	count := offset + 1
+	maxPage = count / pageSize
+	begin = count % pageSize
+	if begin > 1 {
+		minPage = maxPage
+		maxPage++
+	} else if begin == 1 {
+		// means the first record in one page
+		minPage = maxPage
+	} else {
+		minPage = maxPage - 1
+		begin = pageSize
+	}
+	begin--
+	end = begin
+	if maxPage >= pageCount {
+		maxPage = pageCount
+		end = 0
+	} else {
+		maxPage++
+	}
+	return begin, end, minPage, maxPage
 }

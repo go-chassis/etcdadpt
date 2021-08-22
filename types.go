@@ -33,6 +33,8 @@ const (
 const (
 	OrderByKey SortTarget = iota
 	OrderByCreate
+	OrderByMod
+	OrderByVer
 )
 
 const (
