@@ -1,7 +1,7 @@
 name: Merge check
 on: [ push, pull_request ]
 jobs:
-  ut:
+  ut-for-etcd:
     runs-on: ubuntu-latest
     steps:
       - name: Set up Go 1.16
@@ -11,7 +11,7 @@ jobs:
         id: go
       - name: Check out code into the Go module directory
         uses: actions/checkout@v1
-      - name: UT for etcd
+      - name: UT
         run: |
           docker run -d -p 2379:2379 --name etcd quay.io/coreos/etcd etcd -name etcd --advertise-client-urls http://0.0.0.0:2379 --listen-client-urls http://0.0.0.0:2379
           while ! nc -z 127.0.0.1 2379; do
@@ -20,7 +20,18 @@ jobs:
           export TEST_DB_KIND=etcd
           export TEST_DB_URI=127.0.0.1:2379
           go test $(go list ./... | grep -v embedded | grep -v examples) -cover -covermode atomic -coverprofile coverage.out
-      - name: UT for embedded_etcd
+
+  ut-for-embedded_etcd:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set up Go 1.16
+        uses: actions/setup-go@v1
+        with:
+          go-version: 1.16
+        id: go
+      - name: Check out code into the Go module directory
+        uses: actions/checkout@v1
+      - name: UT
         run: |
           export TEST_DB_KIND=embedded_etcd
           go test $(go list ./... | grep -v remote | grep -v examples) -cover -covermode atomic -coverprofile coverage.out
