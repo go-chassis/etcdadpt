@@ -22,11 +22,12 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/coreos/etcd/clientv3"
-	"github.com/coreos/etcd/etcdserver/api/v3rpc/rpctypes"
-	"github.com/coreos/etcd/etcdserver/etcdserverpb"
+	"go.etcd.io/etcd/api/v3/etcdserverpb"
+
 	"github.com/little-cui/etcdadpt"
 	"github.com/little-cui/etcdadpt/middleware/metrics"
+	"go.etcd.io/etcd/api/v3/v3rpc/rpctypes"
+	clientv3 "go.etcd.io/etcd/client/v3"
 )
 
 func (c *Client) Txn(ctx context.Context, opts []etcdadpt.OpOptions) (*etcdadpt.Response, error) {

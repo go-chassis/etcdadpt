@@ -22,9 +22,9 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/coreos/etcd/clientv3"
 	"github.com/little-cui/etcdadpt"
 	"github.com/little-cui/etcdadpt/middleware/metrics"
+	clientv3 "go.etcd.io/etcd/client/v3"
 )
 
 func (c *Client) Compact(ctx context.Context, reserve int64) error {

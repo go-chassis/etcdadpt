@@ -22,6 +22,7 @@ import (
 	"runtime"
 
 	"github.com/coreos/pkg/capnslog"
+
 	"github.com/go-chassis/foundation/fileutil"
 	"github.com/go-chassis/openlog"
 )
