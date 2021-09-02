@@ -20,7 +20,7 @@ package etcdadpt
 import (
 	"context"
 
-	"github.com/coreos/etcd/mvcc/mvccpb"
+	"go.etcd.io/etcd/api/v3/mvccpb"
 )
 
 // Get get one kv

@@ -19,7 +19,6 @@ package embedded
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"net/url"
@@ -27,13 +26,14 @@ import (
 	"strings"
 	"time"
 
-	"github.com/coreos/etcd/compactor"
-	"github.com/coreos/etcd/embed"
-	"github.com/coreos/etcd/etcdserver"
-	"github.com/coreos/etcd/etcdserver/api/v3rpc/rpctypes"
-	"github.com/coreos/etcd/etcdserver/etcdserverpb"
-	"github.com/coreos/etcd/lease"
-	"github.com/coreos/etcd/mvcc/mvccpb"
+	"go.etcd.io/etcd/api/v3/etcdserverpb"
+	"go.etcd.io/etcd/api/v3/mvccpb"
+	"go.etcd.io/etcd/api/v3/v3rpc/rpctypes"
+	"go.etcd.io/etcd/server/v3/etcdserver"
+	v3compactor "go.etcd.io/etcd/server/v3/etcdserver/api/v3compactor"
+	"go.etcd.io/etcd/server/v3/lease"
+
+	"go.etcd.io/etcd/server/v3/embed"
 
 	"github.com/go-chassis/foundation/gopool"
 	"github.com/go-chassis/foundation/stringutil"
@@ -436,7 +436,11 @@ func (s *EtcdEmbed) Watch(ctx context.Context, opts ...etcdadpt.OpOption) (err e
 			}
 			keyBytes = s.getPrefixEndKey(stringutil.Str2bytes(key))
 		}
-		watchID := ws.Watch(op.Key, keyBytes, op.Revision)
+		watchID, err := ws.Watch(0, op.Key, keyBytes, op.Revision)
+		if err != nil {
+			s.logger().Error(err.Error())
+			return err
+		}
 		defer func() {
 			if err := ws.Cancel(watchID); err != nil {
 				s.logger().Error(err.Error())
@@ -446,22 +450,22 @@ func (s *EtcdEmbed) Watch(ctx context.Context, opts ...etcdadpt.OpOption) (err e
 		for {
 			select {
 			case <-ctx.Done():
-				return
+				return nil
 			case resp, ok := <-responses:
 				if !ok {
 					err = errors.New("channel is closed")
-					return
+					return err
 				}
 
 				err = dispatch(resp.Events, op.WatchCallback)
 				if err != nil {
-					return
+					return err
 				}
 			}
 		}
 	}
 	err = fmt.Errorf("no key has been watched")
-	return
+	return err
 }
 
 func (s *EtcdEmbed) ListCluster(ctx context.Context) (etcdadpt.Clusters, error) {
@@ -614,16 +618,13 @@ func NewEmbeddedEtcd(cfg etcdadpt.Config) etcdadpt.Client {
 	serverCfg.LCUrls = nil
 	serverCfg.ACUrls = nil
 	if cfg.CompactIndexDelta > 0 {
-		serverCfg.AutoCompactionMode = compactor.ModeRevision
+		serverCfg.AutoCompactionMode = v3compactor.ModeRevision
 		serverCfg.AutoCompactionRetention = strconv.FormatInt(cfg.CompactIndexDelta, 10)
 	} else if cfg.CompactInterval > 0 {
 		// 自动压缩历史, 1 hour
-		serverCfg.AutoCompactionMode = compactor.ModePeriodic
+		serverCfg.AutoCompactionMode = v3compactor.ModePeriodic
 		serverCfg.AutoCompactionRetention = cfg.CompactInterval.String()
 	}
-
-	bytes, _ := json.Marshal(serverCfg)
-	logger.Debug(stringutil.Bytes2str(bytes))
 
 	etcd, err := embed.StartEtcd(serverCfg)
 	if err != nil {

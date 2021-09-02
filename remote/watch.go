@@ -22,10 +22,10 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/coreos/etcd/clientv3"
-	"github.com/coreos/etcd/mvcc/mvccpb"
 	"github.com/go-chassis/foundation/stringutil"
 	"github.com/little-cui/etcdadpt"
+	"go.etcd.io/etcd/api/v3/mvccpb"
+	clientv3 "go.etcd.io/etcd/client/v3"
 )
 
 func (c *Client) Watch(ctx context.Context, opts ...etcdadpt.OpOption) (err error) {

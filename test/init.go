@@ -32,6 +32,9 @@ func init() {
 	if len(kind) == 0 {
 		kind = "etcd"
 	}
+	if len(uri) == 0 && kind == "etcd" {
+		uri = "127.0.0.1:2379"
+	}
 	etcdadpt.Init(etcdadpt.Config{
 		Kind:             kind,
 		ClusterAddresses: uri,

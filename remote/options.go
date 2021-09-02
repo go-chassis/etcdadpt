@@ -18,9 +18,9 @@
 package remote
 
 import (
-	"github.com/coreos/etcd/clientv3"
 	"github.com/go-chassis/foundation/stringutil"
 	"github.com/little-cui/etcdadpt"
+	clientv3 "go.etcd.io/etcd/client/v3"
 )
 
 func (c *Client) toGetRequest(op etcdadpt.OpOptions) []clientv3.OpOption {
