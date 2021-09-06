@@ -76,13 +76,13 @@ func TestList(t *testing.T) {
 		assert.Equal(t, int64(1), resp.Count)
 		assert.Equal(t, 0, len(resp.Kvs))
 
-		resp, err = etcdadpt.Instance().Do(context.Background(), etcdadpt.PUT, etcdadpt.WithStrKey("/test_range/c"),
-			etcdadpt.WithStrValue("c"))
+		resp, err = etcdadpt.Instance().Do(context.Background(), etcdadpt.PUT, etcdadpt.WithStrKey("/test_range/d"),
+			etcdadpt.WithStrValue("d"))
 		assert.NoError(t, err)
 		assert.True(t, resp.Succeeded)
 
-		resp, err = etcdadpt.Instance().Do(context.Background(), etcdadpt.PUT, etcdadpt.WithStrKey("/test_range/d"),
-			etcdadpt.WithStrValue("d"))
+		resp, err = etcdadpt.Instance().Do(context.Background(), etcdadpt.PUT, etcdadpt.WithStrKey("/test_range/c"),
+			etcdadpt.WithStrValue("c"))
 		assert.NoError(t, err)
 		assert.True(t, resp.Succeeded)
 
@@ -299,33 +299,57 @@ func TestList(t *testing.T) {
 		assert.Equal(t, "/test_range/c", string(resp.Kvs[1].Key))
 		assert.Equal(t, "c", string(resp.Kvs[1].Value))
 	})
-	/* TODO support these scenarios
-	t.Run("page 1 limit 2 order by create rev should return b,a", func(t *testing.T) {
+	/* TODO support it
+	t.Run("page 2 limit 2 order by create rev should return d,c", func(t *testing.T) {
 		resp, err = etcdadpt.Instance().Do(context.Background(), etcdadpt.GET,
 			etcdadpt.WithStrKey("/test_range/"), etcdadpt.WithPrefix(),
-			etcdadpt.WithOffset(0), etcdadpt.WithLimit(2), etcdadpt.WithOrderByCreate())
+			etcdadpt.WithOffset(2), etcdadpt.WithLimit(2), etcdadpt.WithOrderByCreate(), etcdadpt.WithAscendOrder())
 		assert.NoError(t, err)
 		assert.True(t, resp.Succeeded)
 		assert.Equal(t, int64(5), resp.Count)
 		assert.Equal(t, 2, len(resp.Kvs))
-		assert.Equal(t, "/test_range/b", string(resp.Kvs[0].Key))
-		assert.Equal(t, "b", string(resp.Kvs[0].Value))
+		assert.Equal(t, "/test_range/d", string(resp.Kvs[0].Key))
+		assert.Equal(t, "d", string(resp.Kvs[0].Value))
+		assert.Equal(t, "/test_range/c", string(resp.Kvs[1].Key))
+		assert.Equal(t, "c", string(resp.Kvs[1].Value))
+	})
+
+	t.Run("page 3 limit 2 order by create rev should return dd", func(t *testing.T) {
+		resp, err = etcdadpt.Instance().Do(context.Background(), etcdadpt.GET,
+			etcdadpt.WithStrKey("/test_range/"), etcdadpt.WithPrefix(),
+			etcdadpt.WithOffset(4), etcdadpt.WithLimit(2), etcdadpt.WithOrderByCreate(), etcdadpt.WithAscendOrder())
+		assert.NoError(t, err)
+		assert.True(t, resp.Succeeded)
+		assert.Equal(t, int64(5), resp.Count)
+		assert.Equal(t, 1, len(resp.Kvs))
+		assert.Equal(t, "/test_range/dd", string(resp.Kvs[0].Key))
+		assert.Equal(t, "dd", string(resp.Kvs[0].Value))
+	})
+
+	t.Run("page 2 limit 2 order by create rev desc should return c,a", func(t *testing.T) {
+		resp, err = etcdadpt.Instance().Do(context.Background(), etcdadpt.GET,
+			etcdadpt.WithStrKey("/test_range/"), etcdadpt.WithPrefix(),
+			etcdadpt.WithOffset(2), etcdadpt.WithLimit(2), etcdadpt.WithOrderByCreate(), etcdadpt.WithDescendOrder())
+		assert.NoError(t, err)
+		assert.True(t, resp.Succeeded)
+		assert.Equal(t, int64(5), resp.Count)
+		assert.Equal(t, 2, len(resp.Kvs))
+		assert.Equal(t, "/test_range/c", string(resp.Kvs[0].Key))
+		assert.Equal(t, "c", string(resp.Kvs[0].Value))
 		assert.Equal(t, "/test_range/a", string(resp.Kvs[1].Key))
 		assert.Equal(t, "a", string(resp.Kvs[1].Value))
 	})
 
-	t.Run("page 1 limit 2 order by create rev desc should return dd,d", func(t *testing.T) {
+	t.Run("page 3 limit 2 order by create rev desc should return b", func(t *testing.T) {
 		resp, err = etcdadpt.Instance().Do(context.Background(), etcdadpt.GET,
 			etcdadpt.WithStrKey("/test_range/"), etcdadpt.WithPrefix(),
-			etcdadpt.WithOffset(0), etcdadpt.WithLimit(2), etcdadpt.WithOrderByCreate(), etcdadpt.WithDescendOrder())
+			etcdadpt.WithOffset(4), etcdadpt.WithLimit(2), etcdadpt.WithOrderByCreate(), etcdadpt.WithDescendOrder())
 		assert.NoError(t, err)
 		assert.True(t, resp.Succeeded)
 		assert.Equal(t, int64(5), resp.Count)
-		assert.Equal(t, 2, len(resp.Kvs))
-		assert.Equal(t, "/test_range/dd", string(resp.Kvs[0].Key))
-		assert.Equal(t, "dd", string(resp.Kvs[0].Value))
-		assert.Equal(t, "/test_range/d", string(resp.Kvs[1].Key))
-		assert.Equal(t, "d", string(resp.Kvs[1].Value))
+		assert.Equal(t, 1, len(resp.Kvs))
+		assert.Equal(t, "/test_range/b", string(resp.Kvs[0].Key))
+		assert.Equal(t, "b", string(resp.Kvs[0].Value))
 	})
 	*/
 
