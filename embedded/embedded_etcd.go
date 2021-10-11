@@ -585,10 +585,6 @@ func NewEmbeddedEtcd(cfg etcdadpt.Config) etcdadpt.Client {
 	if len(cfg.ManagerAddress) > 0 {
 		mgrAddrs = cfg.ManagerAddress
 	}
-	clusterAddrs := hostName + "=" + mgrAddrs
-	if len(cfg.ClusterAddresses) > 0 {
-		clusterAddrs = cfg.ClusterAddresses
-	}
 	inst.goroutine = gopool.New(gopool.Configure().WithRecoverFunc(inst.logRecover))
 
 	if cfg.SslEnabled {
@@ -604,19 +600,30 @@ func NewEmbeddedEtcd(cfg etcdadpt.Config) etcdadpt.Client {
 	serverCfg.Dir = "data"
 	// 集群支持
 	serverCfg.Name = hostName
-	serverCfg.InitialCluster = clusterAddrs
-	// 1. 管理端口
+	serverCfg.InitialCluster = hostName + "=" + mgrAddrs
+	// 1. 业务端口，默认2379端口关闭
+	serverCfg.LCUrls = nil
+	serverCfg.ACUrls = nil
+	if len(cfg.ClusterAddresses) > 0 {
+		urls, err := parseURL(cfg.ClusterAddresses)
+		if err != nil {
+			logger.Error(fmt.Sprintf(`"ClusterAddresses" field configure error: %s`, err))
+			inst.err <- err
+			return inst
+		}
+		serverCfg.LCUrls = urls
+		serverCfg.ACUrls = urls
+	}
+	// 2. 管理端口
 	urls, err := parseURL(mgrAddrs)
 	if err != nil {
-		logger.Error(fmt.Sprintf(`"manager_addr" field configure error: %s`, err))
+		logger.Error(fmt.Sprintf(`"ManagerAddress" field configure error: %s`, err))
 		inst.err <- err
 		return inst
 	}
 	serverCfg.LPUrls = urls
 	serverCfg.APUrls = urls
-	// 2. 业务端口，关闭默认2379端口
-	serverCfg.LCUrls = nil
-	serverCfg.ACUrls = nil
+	// 压缩配置项
 	if cfg.CompactIndexDelta > 0 {
 		serverCfg.AutoCompactionMode = v3compactor.ModeRevision
 		serverCfg.AutoCompactionRetention = strconv.FormatInt(cfg.CompactIndexDelta, 10)
@@ -642,7 +649,8 @@ func parseURL(addrs string) ([]url.URL, error) {
 	var urls []url.URL
 	ips := strings.Split(addrs, ",")
 	for _, ip := range ips {
-		addr, err := url.Parse(ip)
+		arr := strings.Split(ip, "=")
+		addr, err := url.Parse(arr[len(arr)-1])
 		if err != nil {
 			return nil, err
 		}
