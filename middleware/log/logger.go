@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package remote
+package log
 
 import (
 	"fmt"
@@ -29,12 +29,12 @@ import (
 
 const grpcCallerSkip = 2
 
-// clientLogger implement from grcplog.LoggerV2s and capnslog.Formatter
-type clientLogger struct {
+// Logger implement from grcplog.LoggerV2s and capnslog.Formatter
+type Logger struct {
 	Logger openlog.Logger
 }
 
-func (l *clientLogger) Format(pkg string, level capnslog.LogLevel, depth int, entries ...interface{}) {
+func (l *Logger) Format(pkg string, level capnslog.LogLevel, depth int, entries ...interface{}) {
 	format := l.getCaller(depth+1+grpcCallerSkip) + " " + pkg + " %s"
 	switch level {
 	case capnslog.NOTICE, capnslog.DEBUG, capnslog.TRACE:
@@ -44,7 +44,7 @@ func (l *clientLogger) Format(pkg string, level capnslog.LogLevel, depth int, en
 	}
 }
 
-func (l *clientLogger) getCaller(depth int) string {
+func (l *Logger) getCaller(depth int) string {
 	_, file, line, ok := runtime.Caller(depth + 1)
 	if !ok {
 		return "???"
@@ -52,82 +52,82 @@ func (l *clientLogger) getCaller(depth int) string {
 	return fmt.Sprintf("%s:%d", fileutil.LastNameOf(file), line)
 }
 
-func (l *clientLogger) Flush() {
+func (l *Logger) Flush() {
 }
 
-func (l *clientLogger) Debug(args ...interface{}) {
+func (l *Logger) Debug(args ...interface{}) {
 	l.Logger.Debug(fmt.Sprint(args...))
 }
 
-func (l *clientLogger) Debugln(args ...interface{}) {
+func (l *Logger) Debugln(args ...interface{}) {
 	l.Logger.Debug(fmt.Sprint(args...))
 }
 
-func (l *clientLogger) Debugf(format string, args ...interface{}) {
+func (l *Logger) Debugf(format string, args ...interface{}) {
 	l.Logger.Debug(fmt.Sprintf(format, args...))
 }
 
-func (l *clientLogger) Info(args ...interface{}) {
+func (l *Logger) Info(args ...interface{}) {
 	l.Logger.Info(fmt.Sprint(args...))
 }
 
-func (l *clientLogger) Infoln(args ...interface{}) {
+func (l *Logger) Infoln(args ...interface{}) {
 	l.Logger.Info(fmt.Sprint(args...))
 }
 
-func (l *clientLogger) Infof(format string, args ...interface{}) {
+func (l *Logger) Infof(format string, args ...interface{}) {
 	l.Logger.Info(fmt.Sprintf(format, args...))
 }
 
-func (l *clientLogger) Warning(args ...interface{}) {
+func (l *Logger) Warning(args ...interface{}) {
 	l.Logger.Warn(fmt.Sprint(args...))
 }
 
-func (l *clientLogger) Warningln(args ...interface{}) {
+func (l *Logger) Warningln(args ...interface{}) {
 	l.Logger.Warn(fmt.Sprint(args...))
 }
 
-func (l *clientLogger) Warningf(format string, args ...interface{}) {
+func (l *Logger) Warningf(format string, args ...interface{}) {
 	l.Logger.Warn(fmt.Sprintf(format, args...))
 }
 
-func (l *clientLogger) Error(args ...interface{}) {
+func (l *Logger) Error(args ...interface{}) {
 	l.Logger.Error(fmt.Sprint(args...), nil)
 }
 
-func (l *clientLogger) Errorln(args ...interface{}) {
+func (l *Logger) Errorln(args ...interface{}) {
 	l.Logger.Error(fmt.Sprint(args...), nil)
 }
 
-func (l *clientLogger) Errorf(format string, args ...interface{}) {
+func (l *Logger) Errorf(format string, args ...interface{}) {
 	l.Logger.Error(fmt.Sprintf(format, args...), nil)
 }
 
 // V reports whether verbosity level l is at least the requested verbose level.
-func (l *clientLogger) V(_ int) bool {
+func (l *Logger) V(_ int) bool {
 	return true
 }
 
-func (l *clientLogger) Fatal(args ...interface{}) {
+func (l *Logger) Fatal(args ...interface{}) {
 	l.Logger.Fatal(fmt.Sprint(args...), nil)
 }
 
-func (l *clientLogger) Fatalf(format string, args ...interface{}) {
+func (l *Logger) Fatalf(format string, args ...interface{}) {
 	l.Logger.Fatal(fmt.Sprintf(format, args...), nil)
 }
 
-func (l *clientLogger) Fatalln(args ...interface{}) {
+func (l *Logger) Fatalln(args ...interface{}) {
 	l.Logger.Fatal(fmt.Sprint(args...), nil)
 }
 
-func (l *clientLogger) Print(args ...interface{}) {
+func (l *Logger) Print(args ...interface{}) {
 	l.Logger.Error(fmt.Sprint(args...), nil)
 }
 
-func (l *clientLogger) Printf(format string, args ...interface{}) {
+func (l *Logger) Printf(format string, args ...interface{}) {
 	l.Logger.Error(fmt.Sprintf(format, args...), nil)
 }
 
-func (l *clientLogger) Println(args ...interface{}) {
+func (l *Logger) Println(args ...interface{}) {
 	l.Logger.Error(fmt.Sprint(args...), nil)
 }

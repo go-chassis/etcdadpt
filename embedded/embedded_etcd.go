@@ -41,6 +41,12 @@ import (
 	"github.com/little-cui/etcdadpt"
 )
 
+const (
+	DefaultDataDir           = "data"
+	DefaultLogFile           = "./log/etcd.log"
+	DefaultLogRotationConfig = `{"maxsize": 20, "maxage": 0, "maxbackups": 50, "localtime": false, "compress": true}`
+)
+
 func init() {
 	etcdadpt.Install("embeded_etcd", NewEmbeddedEtcd) //TODO remove misspell in future
 	etcdadpt.Install("embedded_etcd", NewEmbeddedEtcd)
@@ -595,9 +601,13 @@ func NewEmbeddedEtcd(cfg etcdadpt.Config) etcdadpt.Client {
 	serverCfg.EnableV2 = false
 	serverCfg.EnablePprof = false
 	serverCfg.QuotaBackendBytes = etcdserver.MaxQuotaBytes
+	// log
+	//serverCfg.LogOutputs = []string{DefaultLogFile}
+	//serverCfg.EnableLogRotation = true
+	//serverCfg.LogRotationConfigJSON = DefaultLogRotationConfig
 	// TODO 不支持使用TLS通信
 	// 存储目录，相对于工作目录
-	serverCfg.Dir = "data"
+	serverCfg.Dir = DefaultDataDir
 	// 集群支持
 	serverCfg.Name = hostName
 	serverCfg.InitialCluster = hostName + "=" + mgrAddrs

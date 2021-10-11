@@ -29,7 +29,6 @@ import (
 	"github.com/little-cui/etcdadpt"
 	"github.com/little-cui/etcdadpt/middleware/metrics"
 	clientv3 "go.etcd.io/etcd/client/v3"
-	"google.golang.org/grpc/grpclog"
 )
 
 var FirstEndpoint string
@@ -207,8 +206,6 @@ func NewClient(cfg etcdadpt.Config) etcdadpt.Client {
 	}
 	logger := inst.logger()
 	logger.Warn("enable remote registry mode")
-
-	grpclog.SetLoggerV2(&clientLogger{Logger: logger})
 
 	if err := inst.Initialize(); err != nil {
 		inst.err <- err

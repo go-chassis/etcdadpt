@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package remote
+package log
 
 import (
 	"testing"
@@ -23,7 +23,7 @@ import (
 )
 
 func TestClientLogger_Print(t *testing.T) {
-	l := &clientLogger{}
+	l := &Logger{}
 
 	defer func() {
 		recover()
