@@ -39,6 +39,7 @@ import (
 	"github.com/go-chassis/foundation/stringutil"
 	"github.com/go-chassis/openlog"
 	"github.com/little-cui/etcdadpt"
+	"github.com/little-cui/etcdadpt/remote"
 )
 
 const (
@@ -273,7 +274,18 @@ func (s *EtcdEmbed) getLeaderCurrentRevision(ctx context.Context) int64 {
 func (s *EtcdEmbed) Do(ctx context.Context, opts ...etcdadpt.OpOption) (*etcdadpt.Response, error) {
 	op := etcdadpt.OptionsToOp(opts...)
 
-	otCtx, cancel := s.WithTimeout(ctx)
+	var otCtx context.Context
+	var cancel context.CancelFunc
+	wait := ctx.Value(remote.QueryParamWait).(string)
+	if wait != "" {
+		duration, err := time.ParseDuration(wait)
+		if err != nil {
+			return nil, err
+		}
+		otCtx, cancel = context.WithTimeout(ctx, duration)
+	} else {
+		otCtx, cancel = s.WithTimeout(ctx)
+	}
 	defer cancel()
 	var err error
 	var resp *etcdadpt.Response

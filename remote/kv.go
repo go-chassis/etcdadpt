@@ -38,7 +38,18 @@ func (c *Client) Do(ctx context.Context, opts ...etcdadpt.OpOption) (*etcdadpt.R
 	start := time.Now()
 	op := etcdadpt.OptionsToOp(opts...)
 	span := TracingBegin(ctx, "etcd:do", op)
-	otCtx, cancel := c.WithTimeout(ctx)
+	var otCtx context.Context
+	var cancel context.CancelFunc
+	wait := ctx.Value(QueryParamWait).(string)
+	if wait != "" {
+		duration, err := time.ParseDuration(wait)
+		if err != nil {
+			return nil, err
+		}
+		otCtx, cancel = context.WithTimeout(ctx, duration)
+	} else {
+		otCtx, cancel = c.WithTimeout(ctx)
+	}
 	defer func() {
 		metrics.ReportBackendOperationCompleted(op.Action.String(), err, start)
 		TracingEnd(span, err)

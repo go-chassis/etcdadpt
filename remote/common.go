@@ -44,6 +44,8 @@ const (
 	OperationLeaseRenew  = "LEASE_RENEW"
 	OperationLeaseRevoke = "LEASE_REVOKE"
 	OperationSyncMembers = "SYNC"
+
+	QueryParamWait = "wait"
 )
 
 func max(n1, n2 int64) int64 {
