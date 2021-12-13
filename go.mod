@@ -4,7 +4,7 @@ go 1.16
 
 require (
 	github.com/coreos/pkg v0.0.0-20180928190104-399ea9e2e55f // v4
-	github.com/go-chassis/foundation v0.3.1-0.20210806081520-3bd92d1ef787
+	github.com/go-chassis/foundation v0.4.0
 	github.com/go-chassis/go-chassis/v2 v2.3.0
 	github.com/go-chassis/openlog v1.1.3
 	github.com/prometheus/client_golang v1.11.0

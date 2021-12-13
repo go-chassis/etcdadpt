@@ -166,3 +166,15 @@ func TxnWithCmp(ctx context.Context, opts []OpOptions,
 func ListCluster(ctx context.Context) (Clusters, error) {
 	return Instance().ListCluster(ctx)
 }
+
+// Lock func will lock the key, and retry three times if it fails.
+// ttl unit is second.
+func Lock(key string, ttl int64) (*DLock, error) {
+	return newDLock(DefaultLock+"/"+key, ttl, true)
+}
+
+// TryLock func will try to lock the key.
+// ttl unit is second.
+func TryLock(key string, ttl int64) (*DLock, error) {
+	return newDLock(DefaultLock+"/"+key, ttl, false)
+}

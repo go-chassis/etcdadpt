@@ -25,10 +25,12 @@ import (
 	"strings"
 	"time"
 
+	clientv3 "go.etcd.io/etcd/client/v3"
+
 	"github.com/go-chassis/foundation/gopool"
 	"github.com/little-cui/etcdadpt"
+	"github.com/little-cui/etcdadpt/middleware/log"
 	"github.com/little-cui/etcdadpt/middleware/metrics"
-	clientv3 "go.etcd.io/etcd/client/v3"
 )
 
 var FirstEndpoint string
@@ -76,7 +78,7 @@ func (c *Client) Initialize() (err error) {
 
 	c.Client, err = c.newClient()
 	if err != nil {
-		c.logger().Error(fmt.Sprintf("get etcd client %v failed. error: %s", c.Endpoints, err))
+		log.GetLogger().Error(fmt.Sprintf("get etcd client %v failed. error: %s", c.Endpoints, err))
 		c.onError(err)
 		return
 	}
@@ -86,7 +88,7 @@ func (c *Client) Initialize() (err error) {
 
 	close(c.ready)
 
-	c.logger().Warn(fmt.Sprintf("get etcd client %v completed, ssl: %v, dial timeout: %s, auto sync endpoints interval is %s.",
+	log.GetLogger().Warn(fmt.Sprintf("get etcd client %v completed, ssl: %v, dial timeout: %s, auto sync endpoints interval is %s.",
 		c.Endpoints, c.Cfg.TLSConfig != nil, c.DialTimeout, c.AutoSyncInterval))
 	return
 }
@@ -155,13 +157,13 @@ epLoop:
 func (c *Client) ReOpen() error {
 	client, cerr := c.newClient()
 	if cerr != nil {
-		c.logger().Error(fmt.Sprintf("create a new connection to etcd %v failed, error: %s",
+		log.GetLogger().Error(fmt.Sprintf("create a new connection to etcd %v failed, error: %s",
 			c.Endpoints, cerr))
 		return cerr
 	}
 	c.Client, client = client, c.Client
 	if cerr = client.Close(); cerr != nil {
-		c.logger().Error(fmt.Sprintf("failed to close the unavailable etcd client, error: %s", cerr))
+		log.GetLogger().Error(fmt.Sprintf("failed to close the unavailable etcd client, error: %s", cerr))
 	}
 	client = nil
 	return nil
@@ -182,7 +184,7 @@ func (c *Client) parseEndpoints() {
 	}
 	c.Endpoints = endpoints
 
-	c.logger().Info(fmt.Sprintf("parse %s -> endpoints: %v, ssl: %v",
+	log.GetLogger().Info(fmt.Sprintf("parse %s -> endpoints: %v, ssl: %v",
 		c.Cfg.ClusterAddresses, c.Endpoints, c.Cfg.SslEnabled))
 }
 
@@ -204,8 +206,7 @@ func NewClient(cfg etcdadpt.Config) etcdadpt.Client {
 	inst := &Client{
 		Cfg: cfg,
 	}
-	logger := inst.logger()
-	logger.Warn("enable remote registry mode")
+	log.GetLogger().Warn("enable remote registry mode")
 
 	if err := inst.Initialize(); err != nil {
 		inst.err <- err
