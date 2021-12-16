@@ -29,16 +29,15 @@ import (
 	"go.etcd.io/etcd/api/v3/etcdserverpb"
 	"go.etcd.io/etcd/api/v3/mvccpb"
 	"go.etcd.io/etcd/api/v3/v3rpc/rpctypes"
+	"go.etcd.io/etcd/server/v3/embed"
 	"go.etcd.io/etcd/server/v3/etcdserver"
 	v3compactor "go.etcd.io/etcd/server/v3/etcdserver/api/v3compactor"
 	"go.etcd.io/etcd/server/v3/lease"
 
-	"go.etcd.io/etcd/server/v3/embed"
-
 	"github.com/go-chassis/foundation/gopool"
 	"github.com/go-chassis/foundation/stringutil"
-	"github.com/go-chassis/openlog"
 	"github.com/little-cui/etcdadpt"
+	"github.com/little-cui/etcdadpt/middleware/log"
 )
 
 const (
@@ -73,7 +72,7 @@ func (s *EtcdEmbed) Close() {
 		s.Embed.Close()
 	}
 	s.goroutine.Close(true)
-	s.logger().Debug("embedded etcd client stopped")
+	log.GetLogger().Debug("embedded etcd client stopped")
 }
 
 func (s *EtcdEmbed) getPrefixEndKey(prefix []byte) []byte {
@@ -244,24 +243,24 @@ func (s *EtcdEmbed) Compact(ctx context.Context, reserve int64) error {
 	curRev := s.getLeaderCurrentRevision(ctx)
 	revToCompact := max(0, curRev-reserve)
 	if revToCompact <= 0 {
-		s.logger().Info(fmt.Sprintf("revision is %d, <=%d, no nead to compact", curRev, reserve))
+		log.GetLogger().Info(fmt.Sprintf("revision is %d, <=%d, no nead to compact", curRev, reserve))
 		return nil
 	}
 
-	s.logger().Info(fmt.Sprintf("compacting... revision is %d(current: %d, reserve %d)", revToCompact, curRev, reserve))
+	log.GetLogger().Info(fmt.Sprintf("compacting... revision is %d(current: %d, reserve %d)", revToCompact, curRev, reserve))
 	_, err := s.Embed.Server.Compact(ctx, &etcdserverpb.CompactionRequest{
 		Revision: revToCompact,
 		Physical: true,
 	})
 	if err != nil {
-		s.logger().Error(fmt.Sprintf("compact locally failed, revision is %d(current: %d, reserve %d), error: %s",
+		log.GetLogger().Error(fmt.Sprintf("compact locally failed, revision is %d(current: %d, reserve %d), error: %s",
 			revToCompact, curRev, reserve, err))
 		return err
 	}
-	s.logger().Info(fmt.Sprintf("compacted locally, revision is %d(current: %d, reserve %d)", revToCompact, curRev, reserve))
+	log.GetLogger().Info(fmt.Sprintf("compacted locally, revision is %d(current: %d, reserve %d)", revToCompact, curRev, reserve))
 
 	// TODO defragment
-	s.logger().Info("defraged locally")
+	log.GetLogger().Info("defraged locally")
 
 	return nil
 }
@@ -444,12 +443,12 @@ func (s *EtcdEmbed) Watch(ctx context.Context, opts ...etcdadpt.OpOption) (err e
 		}
 		watchID, err := ws.Watch(0, op.Key, keyBytes, op.Revision)
 		if err != nil {
-			s.logger().Error(err.Error())
+			log.GetLogger().Error(err.Error())
 			return err
 		}
 		defer func() {
 			if err := ws.Cancel(watchID); err != nil {
-				s.logger().Error(err.Error())
+				log.GetLogger().Error(err.Error())
 			}
 		}()
 		responses := ws.Chan()
@@ -494,7 +493,7 @@ func (s *EtcdEmbed) readyNotify() {
 		})
 	case <-time.After(timeout):
 		err := fmt.Errorf("timed out(%s)", timeout)
-		s.logger().Error(fmt.Sprintf("read notify failed, error: %s", err))
+		log.GetLogger().Error(fmt.Sprintf("read notify failed, error: %s", err))
 
 		s.Embed.Server.Stop()
 
@@ -506,15 +505,8 @@ func (s *EtcdEmbed) WithTimeout(ctx context.Context) (context.Context, context.C
 	return context.WithTimeout(ctx, s.Cfg.RequestTimeOut)
 }
 
-func (s *EtcdEmbed) logger() openlog.Logger {
-	if s.Cfg.Logger == nil {
-		return openlog.GetLogger()
-	}
-	return s.Cfg.Logger
-}
-
 func (s *EtcdEmbed) logRecover(r interface{}) {
-	s.logger().Error(fmt.Sprintf("embedded etcd recover: %v", r))
+	log.GetLogger().Error(fmt.Sprintf("embedded etcd recover: %v", r))
 }
 
 func dispatch(evts []mvccpb.Event, cb etcdadpt.WatchCallback) error {
@@ -580,8 +572,7 @@ func NewEmbeddedEtcd(cfg etcdadpt.Config) etcdadpt.Client {
 		err:   make(chan error, 1),
 		ready: make(chan struct{}),
 	}
-	logger := inst.logger()
-	logger.Warn("enable embedded registry mode")
+	log.GetLogger().Warn("enable embedded registry mode")
 
 	hostName := "sc-0"
 	if len(cfg.ClusterName) > 0 {
@@ -594,7 +585,7 @@ func NewEmbeddedEtcd(cfg etcdadpt.Config) etcdadpt.Client {
 	inst.goroutine = gopool.New(gopool.Configure().WithRecoverFunc(inst.logRecover))
 
 	if cfg.SslEnabled {
-		logger.Info("config no use for embedded etcd")
+		log.GetLogger().Info("config no use for embedded etcd")
 	}
 
 	serverCfg := embed.NewConfig()
@@ -617,7 +608,7 @@ func NewEmbeddedEtcd(cfg etcdadpt.Config) etcdadpt.Client {
 	if len(cfg.ClusterAddresses) > 0 {
 		urls, err := parseURL(cfg.ClusterAddresses)
 		if err != nil {
-			logger.Error(fmt.Sprintf(`"ClusterAddresses" field configure error: %s`, err))
+			log.GetLogger().Error(fmt.Sprintf(`"ClusterAddresses" field configure error: %s`, err))
 			inst.err <- err
 			return inst
 		}
@@ -627,7 +618,7 @@ func NewEmbeddedEtcd(cfg etcdadpt.Config) etcdadpt.Client {
 	// 2. 管理端口
 	urls, err := parseURL(mgrAddrs)
 	if err != nil {
-		logger.Error(fmt.Sprintf(`"ManagerAddress" field configure error: %s`, err))
+		log.GetLogger().Error(fmt.Sprintf(`"ManagerAddress" field configure error: %s`, err))
 		inst.err <- err
 		return inst
 	}
@@ -645,7 +636,7 @@ func NewEmbeddedEtcd(cfg etcdadpt.Config) etcdadpt.Client {
 
 	etcd, err := embed.StartEtcd(serverCfg)
 	if err != nil {
-		logger.Error(fmt.Sprintf("error to start etcd server, error: %s", err))
+		log.GetLogger().Error(fmt.Sprintf("error to start etcd server, error: %s", err))
 		inst.err <- err
 		return inst
 	}

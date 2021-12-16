@@ -29,9 +29,22 @@ import (
 
 const grpcCallerSkip = 2
 
+var globalLogger = Logger{}
+
 // Logger implement from grcplog.LoggerV2s and capnslog.Formatter
 type Logger struct {
 	Logger openlog.Logger
+}
+
+func GetLogger() openlog.Logger {
+	if globalLogger.Logger == nil {
+		return openlog.GetLogger()
+	}
+	return globalLogger.Logger
+}
+
+func SetLogger(logger openlog.Logger) {
+	globalLogger.Logger = logger
 }
 
 func (l *Logger) Format(pkg string, level capnslog.LogLevel, depth int, entries ...interface{}) {

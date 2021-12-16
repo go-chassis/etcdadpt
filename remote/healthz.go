@@ -23,6 +23,8 @@ import (
 	"time"
 
 	"github.com/go-chassis/foundation/backoff"
+
+	"github.com/little-cui/etcdadpt/middleware/log"
 	"github.com/little-cui/etcdadpt/middleware/metrics"
 )
 
@@ -53,9 +55,9 @@ func (c *Client) HealthCheckLoop(ctx context.Context) {
 			continue
 		}
 
-		c.logger().Error(fmt.Sprintf("etcd health check failed, error: %s", lastErr))
+		log.GetLogger().Error(fmt.Sprintf("etcd health check failed, error: %s", lastErr))
 		if err := c.ReOpen(); err != nil {
-			c.logger().Error(fmt.Sprintf("re-connect to etcd failed, error: %s", err))
+			log.GetLogger().Error(fmt.Sprintf("re-connect to etcd failed, error: %s", err))
 		}
 	}
 }
@@ -69,7 +71,7 @@ func (c *Client) autoSync(ctx context.Context) (err error) {
 			return
 		}
 		d := backoff.GetBackoff().Delay(i)
-		c.logger().Error(fmt.Sprintf("retry to sync members from etcd %s after %s, error: %s", c.Endpoints, d, err))
+		log.GetLogger().Error(fmt.Sprintf("retry to sync members from etcd %s after %s, error: %s", c.Endpoints, d, err))
 		select {
 		case <-ctx.Done():
 			return nil

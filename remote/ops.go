@@ -22,9 +22,11 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/little-cui/etcdadpt"
-	"github.com/little-cui/etcdadpt/middleware/metrics"
 	clientv3 "go.etcd.io/etcd/client/v3"
+
+	"github.com/little-cui/etcdadpt"
+	"github.com/little-cui/etcdadpt/middleware/log"
+	"github.com/little-cui/etcdadpt/middleware/metrics"
 )
 
 func (c *Client) Compact(ctx context.Context, reserve int64) error {
@@ -33,7 +35,7 @@ func (c *Client) Compact(ctx context.Context, reserve int64) error {
 
 	revToCompact := max(0, curRev-reserve)
 	if revToCompact <= 0 {
-		c.logger().Info(fmt.Sprintf("revision is %d, <=%d, no nead to compact %s", curRev, reserve, eps))
+		log.GetLogger().Info(fmt.Sprintf("revision is %d, <=%d, no nead to compact %s", curRev, reserve, eps))
 		return nil
 	}
 
@@ -41,7 +43,7 @@ func (c *Client) Compact(ctx context.Context, reserve int64) error {
 	_, err := c.Client.Compact(ctx, revToCompact, clientv3.WithCompactPhysical())
 	metrics.ReportBackendOperationCompleted(OperationCompact, err, t)
 	if err != nil {
-		c.logger().Error(fmt.Sprintf("compact %s failed, revision is %d(current: %d, reserve %d), error: %s",
+		log.GetLogger().Error(fmt.Sprintf("compact %s failed, revision is %d(current: %d, reserve %d), error: %s",
 			eps, revToCompact, curRev, reserve, err))
 		return err
 	}
@@ -56,12 +58,12 @@ func (c *Client) getLeaderCurrentRevision(ctx context.Context) int64 {
 	for _, ep := range eps {
 		resp, err := c.GetEndpointStatus(ctx, ep)
 		if err != nil {
-			c.logger().Error(fmt.Sprintf("compact error ,can not get status from %s, error: %s", ep, err))
+			log.GetLogger().Error(fmt.Sprintf("compact error ,can not get status from %s, error: %s", ep, err))
 			continue
 		}
 		curRev = resp.Header.Revision
 		if resp.Leader == resp.Header.MemberId {
-			c.logger().Info(fmt.Sprintf("get leader endpoint: %s, revision is %d", ep, curRev))
+			log.GetLogger().Info(fmt.Sprintf("get leader endpoint: %s, revision is %d", ep, curRev))
 			break
 		}
 	}
@@ -97,5 +99,5 @@ func (c *Client) Close() {
 	if c.Client != nil {
 		c.Client.Close()
 	}
-	c.logger().Debug("etcd client stopped")
+	log.GetLogger().Debug("etcd client stopped")
 }

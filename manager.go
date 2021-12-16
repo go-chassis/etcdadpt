@@ -47,6 +47,7 @@ func Init(cfg Config) error {
 	cfg.Init()
 
 	grpclog.SetLoggerV2(&log.Logger{Logger: cfg.Logger})
+	log.SetLogger(cfg.Logger)
 
 	for i := 0; ; i++ {
 		inst, err := NewInstance(cfg)

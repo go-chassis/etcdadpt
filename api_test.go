@@ -19,6 +19,7 @@ package etcdadpt_test
 
 import (
 	"context"
+	"errors"
 	"strconv"
 	"sync"
 	"testing"
@@ -675,5 +676,40 @@ func TestDelete(t *testing.T) {
 		assert.NoError(t, err)
 		assert.Equal(t, int64(0), n)
 		assert.Empty(t, kvs)
+	})
+}
+
+func TestLock(t *testing.T) {
+	t.Run("lock key should pass", func(t *testing.T) {
+		lock, err := etcdadpt.Lock("key", 5)
+		assert.Nil(t, err)
+		assert.NotNil(t, lock)
+		t.Log("key locked")
+		assert.NotNil(t, lock.ID())
+		err = lock.Unlock()
+		assert.Nil(t, err)
+	})
+
+	t.Run("key is not lock, using try lock should pass", func(t *testing.T) {
+		lock, err := etcdadpt.TryLock("tryLock", 5)
+		assert.Nil(t, err)
+		assert.NotNil(t, lock)
+		t.Log("tryLock locked")
+		assert.NotNil(t, lock.ID())
+		err = lock.Unlock()
+		assert.Nil(t, err)
+	})
+
+	t.Run("key is lock, using try lock should fail", func(t *testing.T) {
+		lock, err := etcdadpt.Lock("key1", 5)
+		assert.Nil(t, err)
+		assert.NotNil(t, lock)
+		t.Log("key1 locked")
+		tryLock, err := etcdadpt.TryLock("key1", 5)
+		assert.Error(t, err)
+		if !errors.Is(err, etcdadpt.ErrLockKeyFail) {
+			t.Error(err)
+		}
+		assert.Nil(t, tryLock)
 	})
 }

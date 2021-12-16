@@ -21,27 +21,20 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/go-chassis/openlog"
+	"github.com/little-cui/etcdadpt/middleware/log"
 )
 
-func (c *Client) logger() openlog.Logger {
-	if c.Cfg.Logger == nil {
-		return openlog.GetLogger()
-	}
-	return c.Cfg.Logger
-}
-
 func (c *Client) logRecover(r interface{}) {
-	c.logger().Error(fmt.Sprintf("embedded etcd recover: %v", r))
+	log.GetLogger().Error(fmt.Sprintf("embedded etcd recover: %v", r))
 }
 
 func (c *Client) logInfoOrWarn(start time.Time, message string) {
 	cost := time.Since(start)
 	if cost < time.Second {
-		c.logger().Info(fmt.Sprintf("[%s]%s", cost, message))
+		log.GetLogger().Info(fmt.Sprintf("[%s]%s", cost, message))
 		return
 	}
-	c.logger().Warn(fmt.Sprintf("[%s]%s", cost, message))
+	log.GetLogger().Warn(fmt.Sprintf("[%s]%s", cost, message))
 }
 
 func (c *Client) logNilOrWarn(start time.Time, message string) {
@@ -49,5 +42,5 @@ func (c *Client) logNilOrWarn(start time.Time, message string) {
 	if cost < time.Second {
 		return
 	}
-	c.logger().Warn(fmt.Sprintf("[%s]%s", cost, message))
+	log.GetLogger().Warn(fmt.Sprintf("[%s]%s", cost, message))
 }
