@@ -47,7 +47,7 @@ func InsertBytes(ctx context.Context, key string, value []byte, opts ...OpOption
 }
 
 func insert(ctx context.Context, op OpOptions) (bool, error) {
-	resp, err := Instance().TxnWithCmp(ctx, Ops(op), []CmpOptions{OpCmp(CmpCreateRev(op.Key), CmpEqual, 0)}, nil)
+	resp, err := Instance().TxnWithCmp(ctx, Ops(op), If(NotExistKey(string(op.Key))), nil)
 	if err != nil {
 		return false, err
 	}

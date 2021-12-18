@@ -33,23 +33,23 @@ func (op CmpOptions) String() string {
 
 type CmpOption func(op *CmpOptions)
 
-func CmpVer(key []byte) CmpOption {
+func cmpVer(key []byte) CmpOption {
 	return func(op *CmpOptions) { op.Key = key; op.Type = CmpVersion }
 }
-func CmpCreateRev(key []byte) CmpOption {
+func cmpCreateRev(key []byte) CmpOption {
 	return func(op *CmpOptions) { op.Key = key; op.Type = CmpCreate }
 }
-func CmpModRev(key []byte) CmpOption {
+func cmpModRev(key []byte) CmpOption {
 	return func(op *CmpOptions) { op.Key = key; op.Type = CmpMod }
 }
-func CmpVal(key []byte) CmpOption {
+func cmpVal(key []byte) CmpOption {
 	return func(op *CmpOptions) { op.Key = key; op.Type = CmpValue }
 }
-func CmpStrVer(key string) CmpOption       { return CmpVer([]byte(key)) }
-func CmpStrCreateRev(key string) CmpOption { return CmpCreateRev([]byte(key)) }
-func CmpStrModRev(key string) CmpOption    { return CmpModRev([]byte(key)) }
-func CmpStrVal(key string) CmpOption       { return CmpVal([]byte(key)) }
-func OpCmp(opt CmpOption, result CmpResult, v interface{}) (cmp CmpOptions) {
+func cmpStrVer(key string) CmpOption       { return cmpVer([]byte(key)) }
+func cmpStrCreateRev(key string) CmpOption { return cmpCreateRev([]byte(key)) }
+func cmpStrModRev(key string) CmpOption    { return cmpModRev([]byte(key)) }
+func cmpStrVal(key string) CmpOption       { return cmpVal([]byte(key)) }
+func opCmp(opt CmpOption, result CmpResult, v interface{}) (cmp CmpOptions) {
 	opt(&cmp)
 	cmp.Result = result
 	cmp.Value = v
@@ -60,39 +60,45 @@ func OpCmp(opt CmpOption, result CmpResult, v interface{}) (cmp CmpOptions) {
 func If(opts ...CmpOptions) []CmpOptions {
 	return opts
 }
+func ExistKey(key string) CmpOptions {
+	return NotEqualVer(key, 0)
+}
+func NotExistKey(key string) CmpOptions {
+	return EqualCreateRev(key, 0)
+}
 func EqualVer(key string, v interface{}) CmpOptions {
-	return OpCmp(CmpStrVer(key), CmpEqual, v)
+	return opCmp(cmpStrVer(key), CmpEqual, v)
 }
 func NotEqualVer(key string, v interface{}) CmpOptions {
-	return OpCmp(CmpStrVer(key), CmpNotEqual, v)
+	return opCmp(cmpStrVer(key), CmpNotEqual, v)
 }
 func EqualVal(key string, v interface{}) CmpOptions {
-	return OpCmp(CmpStrVal(key), CmpEqual, v)
+	return opCmp(cmpStrVal(key), CmpEqual, v)
 }
 func NotEqualVal(key string, v interface{}) CmpOptions {
-	return OpCmp(CmpStrVal(key), CmpNotEqual, v)
+	return opCmp(cmpStrVal(key), CmpNotEqual, v)
 }
 func EqualCreateRev(key string, v interface{}) CmpOptions {
-	return OpCmp(CmpStrCreateRev(key), CmpEqual, v)
+	return opCmp(cmpStrCreateRev(key), CmpEqual, v)
 }
 func NotEqualCreateRev(key string, v interface{}) CmpOptions {
-	return OpCmp(CmpStrCreateRev(key), CmpNotEqual, v)
+	return opCmp(cmpStrCreateRev(key), CmpNotEqual, v)
 }
 func GreaterCreateRev(key string, v interface{}) CmpOptions {
-	return OpCmp(CmpStrCreateRev(key), CmpGreater, v)
+	return opCmp(cmpStrCreateRev(key), CmpGreater, v)
 }
 func LessCreateRev(key string, v interface{}) CmpOptions {
-	return OpCmp(CmpStrCreateRev(key), CmpLess, v)
+	return opCmp(cmpStrCreateRev(key), CmpLess, v)
 }
 func EqualModRev(key string, v interface{}) CmpOptions {
-	return OpCmp(CmpStrModRev(key), CmpEqual, v)
+	return opCmp(cmpStrModRev(key), CmpEqual, v)
 }
 func NotEqualModRev(key string, v interface{}) CmpOptions {
-	return OpCmp(CmpStrModRev(key), CmpNotEqual, v)
+	return opCmp(cmpStrModRev(key), CmpNotEqual, v)
 }
 func GreaterModRev(key string, v interface{}) CmpOptions {
-	return OpCmp(CmpStrModRev(key), CmpGreater, v)
+	return opCmp(cmpStrModRev(key), CmpGreater, v)
 }
 func LessModRev(key string, v interface{}) CmpOptions {
-	return OpCmp(CmpStrModRev(key), CmpLess, v)
+	return opCmp(cmpStrModRev(key), CmpLess, v)
 }
