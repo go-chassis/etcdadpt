@@ -65,9 +65,10 @@ func (c *Client) Do(ctx context.Context, opts ...etcdadpt.OpOption) (*etcdadpt.R
 		}
 
 		resp = &etcdadpt.Response{
-			Kvs:      etcdResp.Kvs,
-			Count:    etcdResp.Count,
-			Revision: etcdResp.Header.Revision,
+			Kvs:       etcdResp.Kvs,
+			Count:     etcdResp.Count,
+			Revision:  etcdResp.Header.Revision,
+			Succeeded: true,
 		}
 	case etcdadpt.ActionPut:
 		var value string
@@ -80,7 +81,8 @@ func (c *Client) Do(ctx context.Context, opts ...etcdadpt.OpOption) (*etcdadpt.R
 			break
 		}
 		resp = &etcdadpt.Response{
-			Revision: etcdResp.Header.Revision,
+			Revision:  etcdResp.Header.Revision,
+			Succeeded: true,
 		}
 	case etcdadpt.ActionDelete:
 		var etcdResp *clientv3.DeleteResponse
@@ -89,15 +91,14 @@ func (c *Client) Do(ctx context.Context, opts ...etcdadpt.OpOption) (*etcdadpt.R
 			break
 		}
 		resp = &etcdadpt.Response{
-			Revision: etcdResp.Header.Revision,
+			Revision:  etcdResp.Header.Revision,
+			Succeeded: etcdResp.Deleted > 0,
 		}
 	}
 
 	if err != nil {
 		return nil, err
 	}
-
-	resp.Succeeded = true
 
 	c.logNilOrWarn(start, fmt.Sprintf("registry client do %s", op))
 	return resp, nil

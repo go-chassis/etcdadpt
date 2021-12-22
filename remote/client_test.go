@@ -305,7 +305,7 @@ func TestEtcdClient_Watch(t *testing.T) {
 		resp, err := inst.Do(context.Background(), etcdadpt.DEL, etcdadpt.WithStrKey("/test_watch/"),
 			etcdadpt.WithPrefix())
 		assert.NoError(t, err)
-		assert.True(t, resp.Succeeded)
+		assert.False(t, resp.Succeeded)
 	}()
 
 	ctx, cancel := context.WithCancel(context.Background())
