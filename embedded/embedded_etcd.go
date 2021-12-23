@@ -288,9 +288,10 @@ func (s *EtcdEmbed) Do(ctx context.Context, opts ...etcdadpt.OpOption) (*etcdadp
 			pagingResult(op, etcdResp)
 		}
 		resp = &etcdadpt.Response{
-			Kvs:      etcdResp.Kvs,
-			Count:    etcdResp.Count,
-			Revision: etcdResp.Header.Revision,
+			Kvs:       etcdResp.Kvs,
+			Count:     etcdResp.Count,
+			Revision:  etcdResp.Header.Revision,
+			Succeeded: true,
 		}
 	case etcdadpt.ActionPut:
 		var etcdResp *etcdserverpb.PutResponse
@@ -299,7 +300,8 @@ func (s *EtcdEmbed) Do(ctx context.Context, opts ...etcdadpt.OpOption) (*etcdadp
 			break
 		}
 		resp = &etcdadpt.Response{
-			Revision: etcdResp.Header.Revision,
+			Revision:  etcdResp.Header.Revision,
+			Succeeded: true,
 		}
 	case etcdadpt.ActionDelete:
 		var etcdResp *etcdserverpb.DeleteRangeResponse
@@ -308,13 +310,13 @@ func (s *EtcdEmbed) Do(ctx context.Context, opts ...etcdadpt.OpOption) (*etcdadp
 			break
 		}
 		resp = &etcdadpt.Response{
-			Revision: etcdResp.Header.Revision,
+			Revision:  etcdResp.Header.Revision,
+			Succeeded: etcdResp.Deleted > 0,
 		}
 	}
 	if err != nil {
 		return nil, err
 	}
-	resp.Succeeded = true
 	return resp, nil
 }
 

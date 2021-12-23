@@ -596,6 +596,16 @@ func TestTxnWithCmp(t *testing.T) {
 }
 
 func TestDelete(t *testing.T) {
+	t.Run("delete not exist key, should return false", func(t *testing.T) {
+		del, err := etcdadpt.Delete(context.Background(), "not_exist_key")
+		assert.NoError(t, err)
+		assert.False(t, del)
+
+		del, err = etcdadpt.Delete(context.Background(), "not_exist_key", etcdadpt.WithPrefix())
+		assert.NoError(t, err)
+		assert.False(t, del)
+	})
+
 	t.Run("delete prefix, should return true", func(t *testing.T) {
 		err := etcdadpt.Put(context.Background(), "/test_del_prefix/a", "a")
 		assert.NoError(t, err)
@@ -613,7 +623,7 @@ func TestDelete(t *testing.T) {
 
 		del, err = etcdadpt.Delete(context.Background(), "/test_del_prefix/a")
 		assert.NoError(t, err)
-		assert.True(t, del)
+		assert.False(t, del)
 	})
 
 	t.Run("delete list, should return list", func(t *testing.T) {
