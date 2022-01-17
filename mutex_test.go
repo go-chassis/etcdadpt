@@ -23,10 +23,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/stretchr/testify/assert"
+	_ "github.com/little-cui/etcdadpt/test"
 
 	"github.com/little-cui/etcdadpt"
-	_ "github.com/little-cui/etcdadpt/test"
+	"github.com/stretchr/testify/assert"
 )
 
 func init() {
