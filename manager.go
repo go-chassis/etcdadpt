@@ -44,6 +44,11 @@ func Install(pluginImplName string, newFunc newClientFunc) {
 // Init construct storage plugin instance
 // invoked by sc main process
 func Init(cfg Config) error {
+	if pluginInst != nil {
+		log.GetLogger().Warn("init etcd adaptor again, skip!")
+		return nil
+	}
+
 	cfg.Init()
 
 	grpclog.SetLoggerV2(&log.Logger{Logger: cfg.Logger})
