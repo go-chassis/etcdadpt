@@ -22,7 +22,7 @@ Step 2. Select one mode and do initialization.
 etcdadpt.Init(etcdadpt.Config{
 	Kind:             "embedded_etcd",
 	ClusterName:      "c-0",
-	ClusterAddresses: "c-0=http://127.0.0.1:2380",
+	ClusterAddresses: "c-0=http://127.0.0.1:2379",
 })
 ```
 

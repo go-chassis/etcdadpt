@@ -71,7 +71,7 @@ func SwitchToEmbeddedEtcdMode() error {
 	openlog.Info("Switch to embedded etcd mode !!!")
 	return etcdadpt.Init(etcdadpt.Config{
 		Kind:             "embedded_etcd",
-		ClusterAddresses: "default=http://127.0.0.1:2380",
+		ClusterAddresses: "default=http://127.0.0.1:2379",
 	})
 }
 
