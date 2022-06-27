@@ -49,9 +49,6 @@ func TestClientLogger_Print(t *testing.T) {
 	l.Printf("%s", "b")
 	l.Println("a", "b")
 
-	l.Format("a/b", 1, 0, "c")
-	l.Format("a/b", 4, 0, "c")
-
 	assert.True(t, l.V(0))
 
 	l.Fatal("a", "b")
