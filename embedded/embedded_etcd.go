@@ -31,7 +31,7 @@ import (
 	"go.etcd.io/etcd/api/v3/v3rpc/rpctypes"
 	"go.etcd.io/etcd/server/v3/embed"
 	"go.etcd.io/etcd/server/v3/etcdserver"
-	v3compactor "go.etcd.io/etcd/server/v3/etcdserver/api/v3compactor"
+	"go.etcd.io/etcd/server/v3/etcdserver/api/v3compactor"
 	"go.etcd.io/etcd/server/v3/lease"
 
 	"github.com/go-chassis/foundation/gopool"
@@ -40,11 +40,7 @@ import (
 	"github.com/little-cui/etcdadpt/middleware/log"
 )
 
-const (
-	DefaultDataDir           = "data"
-	DefaultLogFile           = "./log/etcd.log"
-	DefaultLogRotationConfig = `{"maxsize": 20, "maxage": 0, "maxbackups": 50, "localtime": false, "compress": true}`
-)
+const DefaultDataDir = "data"
 
 func init() {
 	etcdadpt.Install("embeded_etcd", NewEmbeddedEtcd) //TODO remove misspell in future
@@ -594,10 +590,8 @@ func NewEmbeddedEtcd(cfg etcdadpt.Config) etcdadpt.Client {
 	serverCfg.EnableV2 = false
 	serverCfg.EnablePprof = false
 	serverCfg.QuotaBackendBytes = etcdserver.MaxQuotaBytes
-	// log
-	//serverCfg.LogOutputs = []string{DefaultLogFile}
-	//serverCfg.EnableLogRotation = true
-	//serverCfg.LogRotationConfigJSON = DefaultLogRotationConfig
+	// TODO log
+	// serverCfg.ZapLoggerBuilder = embed.NewZapLoggerBuilder(log.GetLogger())
 	// TODO 不支持使用TLS通信
 	// 存储目录，相对于工作目录
 	serverCfg.Dir = DefaultDataDir

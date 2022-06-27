@@ -19,19 +19,13 @@ package log
 
 import (
 	"fmt"
-	"runtime"
 
-	"github.com/coreos/pkg/capnslog"
-
-	"github.com/go-chassis/foundation/fileutil"
 	"github.com/go-chassis/openlog"
 )
 
-const grpcCallerSkip = 2
-
 var globalLogger = Logger{}
 
-// Logger implement from grcplog.LoggerV2s and capnslog.Formatter
+// Logger implement from grcplog.LoggerV2
 type Logger struct {
 	Logger openlog.Logger
 }
@@ -45,39 +39,6 @@ func GetLogger() openlog.Logger {
 
 func SetLogger(logger openlog.Logger) {
 	globalLogger.Logger = logger
-}
-
-func (l *Logger) Format(pkg string, level capnslog.LogLevel, depth int, entries ...interface{}) {
-	format := l.getCaller(depth+1+grpcCallerSkip) + " " + pkg + " %s"
-	switch level {
-	case capnslog.NOTICE, capnslog.DEBUG, capnslog.TRACE:
-		l.Logger.Debug(fmt.Sprintf(format, entries...))
-	default:
-		l.Logger.Error(fmt.Sprintf(format, entries...), nil)
-	}
-}
-
-func (l *Logger) getCaller(depth int) string {
-	_, file, line, ok := runtime.Caller(depth + 1)
-	if !ok {
-		return "???"
-	}
-	return fmt.Sprintf("%s:%d", fileutil.LastNameOf(file), line)
-}
-
-func (l *Logger) Flush() {
-}
-
-func (l *Logger) Debug(args ...interface{}) {
-	l.Logger.Debug(fmt.Sprint(args...))
-}
-
-func (l *Logger) Debugln(args ...interface{}) {
-	l.Logger.Debug(fmt.Sprint(args...))
-}
-
-func (l *Logger) Debugf(format string, args ...interface{}) {
-	l.Logger.Debug(fmt.Sprintf(format, args...))
 }
 
 func (l *Logger) Info(args ...interface{}) {
