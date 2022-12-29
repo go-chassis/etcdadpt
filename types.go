@@ -178,3 +178,7 @@ func (pr *Response) String() string {
 }
 
 type Clusters map[string][]string
+
+type StatusResponse struct {
+	DBSize int64
+}

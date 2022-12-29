@@ -64,7 +64,14 @@ func DemoRun() {
 		openlog.Error(err.Error())
 		return
 	}
-	openlog.Info(fmt.Sprintf("[DEMO] put and get: %v", kv))
+	openlog.Info(fmt.Sprintf("[DEMO] put and get: %+v", kv))
+
+	status, err := etcdadpt.Instance().Status(context.Background())
+	if err != nil {
+		openlog.Error(err.Error())
+		return
+	}
+	openlog.Info(fmt.Sprintf("[DEMO] get status: %+v", status))
 }
 
 func SwitchToEmbeddedEtcdMode() error {

@@ -723,3 +723,9 @@ func TestLock(t *testing.T) {
 		assert.Nil(t, tryLock)
 	})
 }
+
+func TestStatus(t *testing.T) {
+	status, err := etcdadpt.Instance().Status(context.Background())
+	assert.NoError(t, err)
+	assert.NotZero(t, status.DBSize)
+}

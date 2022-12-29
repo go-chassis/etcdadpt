@@ -19,6 +19,7 @@ package remote
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
@@ -28,6 +29,8 @@ import (
 	"github.com/little-cui/etcdadpt/middleware/log"
 	"github.com/little-cui/etcdadpt/middleware/metrics"
 )
+
+var ErrGetLeaderFailed = errors.New("get leader failed")
 
 func (c *Client) Compact(ctx context.Context, reserve int64) error {
 	eps := c.Client.Endpoints()
@@ -53,21 +56,29 @@ func (c *Client) Compact(ctx context.Context, reserve int64) error {
 }
 
 func (c *Client) getLeaderCurrentRevision(ctx context.Context) int64 {
-	eps := c.Client.Endpoints()
 	curRev := int64(0)
+	ep, resp := c.getLeaderStatus(ctx)
+	if len(ep) == 0 || resp == nil {
+		return 0
+	}
+	curRev = resp.Header.Revision
+	log.GetLogger().Info(fmt.Sprintf("get leader endpoint: %s, revision is %d", ep, curRev))
+	return curRev
+}
+
+func (c *Client) getLeaderStatus(ctx context.Context) (string, *clientv3.StatusResponse) {
+	eps := c.Client.Endpoints()
 	for _, ep := range eps {
 		resp, err := c.GetEndpointStatus(ctx, ep)
 		if err != nil {
 			log.GetLogger().Error(fmt.Sprintf("compact error ,can not get status from %s, error: %s", ep, err))
 			continue
 		}
-		curRev = resp.Header.Revision
 		if resp.Leader == resp.Header.MemberId {
-			log.GetLogger().Info(fmt.Sprintf("get leader endpoint: %s, revision is %d", ep, curRev))
-			break
+			return ep, resp
 		}
 	}
-	return curRev
+	return "", nil
 }
 
 func (c *Client) GetEndpointStatus(ctx context.Context, ep string) (*clientv3.StatusResponse, error) {
@@ -83,6 +94,16 @@ func (c *Client) GetEndpointStatus(ctx context.Context, ep string) (*clientv3.St
 func (c *Client) ListCluster(ctx context.Context) (etcdadpt.Clusters, error) {
 	clusters := etcdadpt.ParseClusters(c.Cfg.ClusterName, c.Cfg.ClusterAddresses, c.Cfg.ManagerAddress)
 	return clusters, nil
+}
+
+func (c *Client) Status(ctx context.Context) (*etcdadpt.StatusResponse, error) {
+	ep, resp := c.getLeaderStatus(ctx)
+	if len(ep) == 0 || resp == nil {
+		return nil, ErrGetLeaderFailed
+	}
+	return &etcdadpt.StatusResponse{
+		DBSize: resp.DbSize,
+	}, nil
 }
 
 func (c *Client) Err() <-chan error {

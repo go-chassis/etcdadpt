@@ -71,6 +71,9 @@ func (ec *Client) Compact(ctx context.Context, reserve int64) error {
 func (ec *Client) ListCluster(ctx context.Context) (etcdadpt.Clusters, error) {
 	return nil, nil
 }
+func (ec *Client) Status(ctx context.Context) (*etcdadpt.StatusResponse, error) {
+	return &etcdadpt.StatusResponse{}, nil
+}
 func (ec *Client) Close() {
 }
 

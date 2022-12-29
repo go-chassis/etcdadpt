@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-//Package etcdadpt is the abstraction of kv database operator
+// Package etcdadpt is the abstraction of kv database operator
 package etcdadpt
 
 import (
@@ -50,4 +50,6 @@ type Client interface {
 	Close()
 
 	ListCluster(ctx context.Context) (Clusters, error)
+
+	Status(ctx context.Context) (*StatusResponse, error)
 }

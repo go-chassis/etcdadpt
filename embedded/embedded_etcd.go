@@ -476,6 +476,10 @@ func (s *EtcdEmbed) ListCluster(ctx context.Context) (etcdadpt.Clusters, error) 
 	return clusters, nil
 }
 
+func (s *EtcdEmbed) Status(ctx context.Context) (*etcdadpt.StatusResponse, error) {
+	return &etcdadpt.StatusResponse{DBSize: s.Embed.Server.Backend().Size()}, nil
+}
+
 func (s *EtcdEmbed) readyNotify() {
 	timeout := s.Cfg.DialTimeout
 	select {
