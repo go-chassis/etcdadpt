@@ -71,13 +71,14 @@ func (c *Client) getLeaderStatus(ctx context.Context) (string, *clientv3.StatusR
 	for _, ep := range eps {
 		resp, err := c.GetEndpointStatus(ctx, ep)
 		if err != nil {
-			log.GetLogger().Error(fmt.Sprintf("compact error ,can not get status from %s, error: %s", ep, err))
+			log.GetLogger().Error(fmt.Sprintf("get leader status from %s failed, error: %s", ep, err))
 			continue
 		}
 		if resp.Leader == resp.Header.MemberId {
 			return ep, resp
 		}
 	}
+	log.GetLogger().Error("get leader status failed, error: no leader")
 	return "", nil
 }
 
