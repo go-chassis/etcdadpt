@@ -20,6 +20,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"os"
 
 	_ "github.com/little-cui/etcdadpt/embedded"
 	_ "github.com/little-cui/etcdadpt/remote"
@@ -29,14 +30,7 @@ import (
 )
 
 func main() {
-	err := SwitchToEmbeddedEtcdMode()
-	if err != nil {
-		openlog.Error(err.Error())
-		return
-	}
-	DemoRun()
-
-	err = SwitchToRemoteEtcdMode()
+	err := InitAdpator()
 	if err != nil {
 		openlog.Error(err.Error())
 		return
@@ -74,18 +68,17 @@ func DemoRun() {
 	openlog.Info(fmt.Sprintf("[DEMO] get status: %+v", status))
 }
 
-func SwitchToEmbeddedEtcdMode() error {
+func InitAdpator() error {
+	if os.Getenv("ETCD_KIND") == "etcd" {
+		openlog.Info("Switch to remote etcd mode !!!")
+		return etcdadpt.Init(etcdadpt.Config{
+			Kind:             "etcd",
+			ClusterAddresses: "127.0.0.1:2379",
+		})
+	}
 	openlog.Info("Switch to embedded etcd mode !!!")
 	return etcdadpt.Init(etcdadpt.Config{
 		Kind:             "embedded_etcd",
 		ClusterAddresses: "default=http://127.0.0.1:2379",
-	})
-}
-
-func SwitchToRemoteEtcdMode() error {
-	openlog.Info("Switch to remote etcd mode !!!")
-	return etcdadpt.Init(etcdadpt.Config{
-		Kind:             "etcd",
-		ClusterAddresses: "127.0.0.1:2379",
 	})
 }
