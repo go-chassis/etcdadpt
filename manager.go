@@ -24,7 +24,6 @@ import (
 
 	"github.com/go-chassis/foundation/backoff"
 	"github.com/little-cui/etcdadpt/middleware/log"
-	"google.golang.org/grpc/grpclog"
 )
 
 var (
@@ -51,7 +50,6 @@ func Init(cfg Config) error {
 
 	cfg.Init()
 
-	grpclog.SetLoggerV2(&log.Logger{Logger: cfg.Logger})
 	log.SetLogger(cfg.Logger)
 
 	for i := 0; ; i++ {

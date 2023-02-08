@@ -18,90 +18,18 @@
 package log
 
 import (
-	"fmt"
-
 	"github.com/go-chassis/openlog"
 )
 
-var globalLogger = Logger{}
-
-// Logger implement from grcplog.LoggerV2
-type Logger struct {
-	Logger openlog.Logger
-}
+var globalLogger openlog.Logger
 
 func GetLogger() openlog.Logger {
-	if globalLogger.Logger == nil {
+	if globalLogger == nil {
 		return openlog.GetLogger()
 	}
-	return globalLogger.Logger
+	return globalLogger
 }
 
 func SetLogger(logger openlog.Logger) {
-	globalLogger.Logger = logger
-}
-
-func (l *Logger) Info(args ...interface{}) {
-	l.Logger.Info(fmt.Sprint(args...))
-}
-
-func (l *Logger) Infoln(args ...interface{}) {
-	l.Logger.Info(fmt.Sprint(args...))
-}
-
-func (l *Logger) Infof(format string, args ...interface{}) {
-	l.Logger.Info(fmt.Sprintf(format, args...))
-}
-
-func (l *Logger) Warning(args ...interface{}) {
-	l.Logger.Warn(fmt.Sprint(args...))
-}
-
-func (l *Logger) Warningln(args ...interface{}) {
-	l.Logger.Warn(fmt.Sprint(args...))
-}
-
-func (l *Logger) Warningf(format string, args ...interface{}) {
-	l.Logger.Warn(fmt.Sprintf(format, args...))
-}
-
-func (l *Logger) Error(args ...interface{}) {
-	l.Logger.Error(fmt.Sprint(args...), nil)
-}
-
-func (l *Logger) Errorln(args ...interface{}) {
-	l.Logger.Error(fmt.Sprint(args...), nil)
-}
-
-func (l *Logger) Errorf(format string, args ...interface{}) {
-	l.Logger.Error(fmt.Sprintf(format, args...), nil)
-}
-
-// V reports whether verbosity level l is at least the requested verbose level.
-func (l *Logger) V(_ int) bool {
-	return true
-}
-
-func (l *Logger) Fatal(args ...interface{}) {
-	l.Logger.Fatal(fmt.Sprint(args...), nil)
-}
-
-func (l *Logger) Fatalf(format string, args ...interface{}) {
-	l.Logger.Fatal(fmt.Sprintf(format, args...), nil)
-}
-
-func (l *Logger) Fatalln(args ...interface{}) {
-	l.Logger.Fatal(fmt.Sprint(args...), nil)
-}
-
-func (l *Logger) Print(args ...interface{}) {
-	l.Logger.Error(fmt.Sprint(args...), nil)
-}
-
-func (l *Logger) Printf(format string, args ...interface{}) {
-	l.Logger.Error(fmt.Sprintf(format, args...), nil)
-}
-
-func (l *Logger) Println(args ...interface{}) {
-	l.Logger.Error(fmt.Sprint(args...), nil)
+	globalLogger = logger
 }

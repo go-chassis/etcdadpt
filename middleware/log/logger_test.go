@@ -14,42 +14,41 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package log
+package log_test
 
 import (
 	"testing"
 
+	"github.com/go-chassis/openlog"
+	"github.com/little-cui/etcdadpt/middleware/log"
 	"github.com/stretchr/testify/assert"
 )
 
-func TestClientLogger_Print(t *testing.T) {
-	l := &Logger{}
+type mockLogger struct {
+}
 
-	defer func() {
-		recover()
-		defer func() {
-			recover()
-			defer func() {
-				recover()
-			}()
-			l.Fatalln("a", "b")
-		}()
-		l.Fatalf("%s", "b")
-	}()
-	l.Info("a", "b")
-	l.Infof("%s", "b")
-	l.Infoln("a", "b")
-	l.Warning("a", "b")
-	l.Warningf("%s", "b")
-	l.Warningln("a", "b")
-	l.Error("a", "b")
-	l.Errorf("%s", "b")
-	l.Errorln("a", "b")
-	l.Print("a", "b")
-	l.Printf("%s", "b")
-	l.Println("a", "b")
+func (m *mockLogger) Debug(message string, opts ...openlog.Option) {
+	panic("implement me")
+}
+func (m *mockLogger) Info(message string, opts ...openlog.Option) {
+	panic("implement me")
+}
+func (m *mockLogger) Warn(message string, opts ...openlog.Option) {
+	panic("implement me")
+}
+func (m *mockLogger) Error(message string, opts ...openlog.Option) {
+	panic("implement me")
+}
+func (m *mockLogger) Fatal(message string, opts ...openlog.Option) {
+	panic("implement me")
+}
 
-	assert.True(t, l.V(0))
+func TestGetLogger(t *testing.T) {
+	assert.Equal(t, log.GetLogger(), openlog.GetLogger())
 
-	l.Fatal("a", "b")
+	newLogger := &mockLogger{}
+	oldLogger := openlog.GetLogger()
+	log.SetLogger(newLogger)
+	defer log.SetLogger(oldLogger)
+	assert.Equal(t, log.GetLogger(), newLogger)
 }
