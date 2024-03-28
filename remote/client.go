@@ -27,10 +27,10 @@ import (
 
 	clientv3 "go.etcd.io/etcd/client/v3"
 
+	"github.com/go-chassis/etcdadpt"
+	"github.com/go-chassis/etcdadpt/middleware/log"
+	"github.com/go-chassis/etcdadpt/middleware/metrics"
 	"github.com/go-chassis/foundation/gopool"
-	"github.com/little-cui/etcdadpt"
-	"github.com/little-cui/etcdadpt/middleware/log"
-	"github.com/little-cui/etcdadpt/middleware/metrics"
 )
 
 var FirstEndpoint string

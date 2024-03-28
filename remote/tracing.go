@@ -21,8 +21,8 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/little-cui/etcdadpt"
-	"github.com/little-cui/etcdadpt/middleware/tracing"
+	"github.com/go-chassis/etcdadpt"
+	"github.com/go-chassis/etcdadpt/middleware/tracing"
 )
 
 func TracingBegin(ctx context.Context, operationName string, op etcdadpt.OpOptions) interface{} {

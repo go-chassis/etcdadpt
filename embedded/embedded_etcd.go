@@ -34,16 +34,16 @@ import (
 	"go.etcd.io/etcd/server/v3/etcdserver/api/v3compactor"
 	"go.etcd.io/etcd/server/v3/lease"
 
+	"github.com/go-chassis/etcdadpt"
+	"github.com/go-chassis/etcdadpt/middleware/log"
 	"github.com/go-chassis/foundation/gopool"
 	"github.com/go-chassis/foundation/stringutil"
-	"github.com/little-cui/etcdadpt"
-	"github.com/little-cui/etcdadpt/middleware/log"
 )
 
 const DefaultDataDir = "data"
 
 func init() {
-	etcdadpt.Install("embeded_etcd", NewEmbeddedEtcd) //TODO remove misspell in future
+	etcdadpt.Install("embeded_etcd", NewEmbeddedEtcd) // TODO remove misspell in future
 	etcdadpt.Install("embedded_etcd", NewEmbeddedEtcd)
 }
 

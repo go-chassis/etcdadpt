@@ -22,8 +22,8 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/go-chassis/etcdadpt/middleware/log"
 	"github.com/go-chassis/foundation/backoff"
-	"github.com/little-cui/etcdadpt/middleware/log"
 )
 
 var (

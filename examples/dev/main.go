@@ -22,11 +22,11 @@ import (
 	"fmt"
 	"os"
 
-	_ "github.com/little-cui/etcdadpt/embedded"
-	_ "github.com/little-cui/etcdadpt/remote"
+	_ "github.com/go-chassis/etcdadpt/embedded"
+	_ "github.com/go-chassis/etcdadpt/remote"
 
+	"github.com/go-chassis/etcdadpt"
 	"github.com/go-chassis/openlog"
-	"github.com/little-cui/etcdadpt"
 )
 
 func main() {

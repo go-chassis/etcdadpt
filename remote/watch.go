@@ -22,8 +22,8 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/go-chassis/etcdadpt"
 	"github.com/go-chassis/foundation/stringutil"
-	"github.com/little-cui/etcdadpt"
 	"go.etcd.io/etcd/api/v3/mvccpb"
 	clientv3 "go.etcd.io/etcd/client/v3"
 )

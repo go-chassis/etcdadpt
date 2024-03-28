@@ -8,9 +8,9 @@ Step 1. Import the module and it's all plugins.
 
 ```go
 import (
-	github.com/little-cui/etcdadpt
-	_ "github.com/little-cui/etcdadpt/embedded"
-	_ "github.com/little-cui/etcdadpt/remote"
+	github.com/go-chassis/etcdadpt
+	_ "github.com/go-chassis/etcdadpt/embedded"
+	_ "github.com/go-chassis/etcdadpt/remote"
 )
 ```
 

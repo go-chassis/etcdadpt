@@ -23,8 +23,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/little-cui/etcdadpt"
-	"github.com/little-cui/etcdadpt/remote"
+	"github.com/go-chassis/etcdadpt"
+	"github.com/go-chassis/etcdadpt/remote"
 	"github.com/stretchr/testify/assert"
 	"go.etcd.io/etcd/api/v3/etcdserverpb"
 	"go.etcd.io/etcd/api/v3/mvccpb"

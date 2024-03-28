@@ -18,8 +18,8 @@
 package remote
 
 import (
+	"github.com/go-chassis/etcdadpt"
 	"github.com/go-chassis/foundation/stringutil"
-	"github.com/little-cui/etcdadpt"
 	clientv3 "go.etcd.io/etcd/client/v3"
 )
 

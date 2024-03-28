@@ -24,8 +24,8 @@ import (
 
 	"github.com/go-chassis/foundation/backoff"
 
-	"github.com/little-cui/etcdadpt/middleware/log"
-	"github.com/little-cui/etcdadpt/middleware/metrics"
+	"github.com/go-chassis/etcdadpt/middleware/log"
+	"github.com/go-chassis/etcdadpt/middleware/metrics"
 )
 
 func (c *Client) HealthCheck() {
