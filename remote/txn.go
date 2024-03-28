@@ -24,8 +24,8 @@ import (
 
 	"go.etcd.io/etcd/api/v3/etcdserverpb"
 
-	"github.com/little-cui/etcdadpt"
-	"github.com/little-cui/etcdadpt/middleware/metrics"
+	"github.com/go-chassis/etcdadpt"
+	"github.com/go-chassis/etcdadpt/middleware/metrics"
 	"go.etcd.io/etcd/api/v3/v3rpc/rpctypes"
 	clientv3 "go.etcd.io/etcd/client/v3"
 )

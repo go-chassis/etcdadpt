@@ -28,8 +28,8 @@ import (
 	"github.com/go-chassis/foundation/gopool"
 	"github.com/go-chassis/openlog"
 
-	"github.com/little-cui/etcdadpt/middleware/log"
-	"github.com/little-cui/etcdadpt/middleware/metrics"
+	"github.com/go-chassis/etcdadpt/middleware/log"
+	"github.com/go-chassis/etcdadpt/middleware/metrics"
 )
 
 const (

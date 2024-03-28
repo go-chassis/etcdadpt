@@ -20,10 +20,10 @@ package test
 import (
 	"os"
 
-	_ "github.com/little-cui/etcdadpt/embedded"
-	_ "github.com/little-cui/etcdadpt/remote"
+	_ "github.com/go-chassis/etcdadpt/embedded"
+	_ "github.com/go-chassis/etcdadpt/remote"
 
-	"github.com/little-cui/etcdadpt"
+	"github.com/go-chassis/etcdadpt"
 )
 
 func init() {

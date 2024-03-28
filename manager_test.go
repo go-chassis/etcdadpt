@@ -20,9 +20,9 @@ package etcdadpt_test
 import (
 	"testing"
 
-	_ "github.com/little-cui/etcdadpt/test"
+	_ "github.com/go-chassis/etcdadpt/test"
 
-	"github.com/little-cui/etcdadpt"
+	"github.com/go-chassis/etcdadpt"
 	"github.com/stretchr/testify/assert"
 )
 

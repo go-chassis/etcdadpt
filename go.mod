@@ -1,4 +1,4 @@
-module github.com/little-cui/etcdadpt
+module github.com/go-chassis/etcdadpt
 
 go 1.17
 

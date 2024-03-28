@@ -20,7 +20,7 @@ package buildin
 import (
 	"context"
 
-	"github.com/little-cui/etcdadpt"
+	"github.com/go-chassis/etcdadpt"
 )
 
 var (
