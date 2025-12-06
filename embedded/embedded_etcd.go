@@ -603,8 +603,8 @@ func NewEmbeddedEtcd(cfg etcdadpt.Config) etcdadpt.Client {
 	serverCfg.Name = hostName
 	serverCfg.InitialCluster = hostName + "=" + mgrAddrs
 	// 1. 业务端口，默认2379端口关闭
-	serverCfg.LCUrls = nil
-	serverCfg.ACUrls = nil
+	serverCfg.ListenClientUrls = nil
+	serverCfg.AdvertiseClientUrls = nil
 	if len(cfg.ClusterAddresses) > 0 {
 		urls, err := parseURL(cfg.ClusterAddresses)
 		if err != nil {
@@ -612,8 +612,8 @@ func NewEmbeddedEtcd(cfg etcdadpt.Config) etcdadpt.Client {
 			inst.err <- err
 			return inst
 		}
-		serverCfg.LCUrls = urls
-		serverCfg.ACUrls = urls
+		serverCfg.ListenClientUrls = urls
+		serverCfg.AdvertiseClientUrls = urls
 	}
 	// 2. 管理端口
 	urls, err := parseURL(mgrAddrs)
@@ -622,8 +622,8 @@ func NewEmbeddedEtcd(cfg etcdadpt.Config) etcdadpt.Client {
 		inst.err <- err
 		return inst
 	}
-	serverCfg.LPUrls = urls
-	serverCfg.APUrls = urls
+	serverCfg.ListenPeerUrls = urls
+	serverCfg.AdvertisePeerUrls = urls
 	// 压缩配置项
 	if cfg.CompactIndexDelta > 0 {
 		serverCfg.AutoCompactionMode = v3compactor.ModeRevision
