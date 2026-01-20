@@ -26,22 +26,24 @@ type OpOptions struct {
 	Action Action
 	Key    []byte
 	// EndKey must be lexicographically greater than Key.
-	EndKey        []byte
-	Value         []byte
-	Prefix        bool
-	PrevKV        bool
-	Lease         int64
-	KeyOnly       bool
-	CountOnly     bool
-	OrderBy       SortTarget
-	SortOrder     SortOrder
-	Revision      int64
-	IgnoreLease   bool
-	Mode          CacheMode
-	WatchCallback WatchCallback
-	Offset        int64
-	Limit         int64
-	Global        bool
+	EndKey               []byte
+	Value                []byte
+	Prefix               bool
+	PrevKV               bool
+	Lease                int64
+	KeyOnly              bool
+	CountOnly            bool
+	OrderBy              SortTarget
+	SortOrder            SortOrder
+	Revision             int64
+	IgnoreLease          bool
+	Mode                 CacheMode
+	WatchCallback        WatchCallback
+	Offset               int64
+	Limit                int64
+	Global               bool
+	GlobalInstanceSearch bool
+	InstanceSearch       bool
 }
 
 func (op OpOptions) String() string {
@@ -131,13 +133,17 @@ func WithLease(leaseID int64) OpOption { return func(op *OpOptions) { op.Lease =
 func WithKeyOnly() OpOption            { return func(op *OpOptions) { op.KeyOnly = true } }
 func WithCountOnly() OpOption          { return func(op *OpOptions) { op.CountOnly = true } }
 func WithGlobal() OpOption             { return func(op *OpOptions) { op.Global = true } }
-func WithNoneOrder() OpOption          { return func(op *OpOptions) { op.SortOrder = SortNone } }
-func WithAscendOrder() OpOption        { return func(op *OpOptions) { op.SortOrder = SortAscend } }
-func WithDescendOrder() OpOption       { return func(op *OpOptions) { op.SortOrder = SortDescend } }
-func WithRev(revision int64) OpOption  { return func(op *OpOptions) { op.Revision = revision } }
-func WithIgnoreLease() OpOption        { return func(op *OpOptions) { op.IgnoreLease = true } }
-func WithCacheOnly() OpOption          { return func(op *OpOptions) { op.Mode = ModeCache } }
-func WithNoCache() OpOption            { return func(op *OpOptions) { op.Mode = ModeNoCache } }
+func WithGlobalInstanceSearch() OpOption {
+	return func(op *OpOptions) { op.GlobalInstanceSearch = true }
+}
+func WithInstanceSearch() OpOption    { return func(op *OpOptions) { op.InstanceSearch = true } }
+func WithNoneOrder() OpOption         { return func(op *OpOptions) { op.SortOrder = SortNone } }
+func WithAscendOrder() OpOption       { return func(op *OpOptions) { op.SortOrder = SortAscend } }
+func WithDescendOrder() OpOption      { return func(op *OpOptions) { op.SortOrder = SortDescend } }
+func WithRev(revision int64) OpOption { return func(op *OpOptions) { op.Revision = revision } }
+func WithIgnoreLease() OpOption       { return func(op *OpOptions) { op.IgnoreLease = true } }
+func WithCacheOnly() OpOption         { return func(op *OpOptions) { op.Mode = ModeCache } }
+func WithNoCache() OpOption           { return func(op *OpOptions) { op.Mode = ModeNoCache } }
 func WithWatchCallback(f WatchCallback) OpOption {
 	return func(op *OpOptions) { op.WatchCallback = f }
 }
